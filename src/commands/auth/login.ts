@@ -14,8 +14,8 @@ function openInBrowser(url: string): Promise<boolean> {
     // `start` on Windows is a shell built-in, not an executable.
     // Must invoke via `cmd.exe /c start <url>`.
     const cmd = process.platform === 'win32' ? 'cmd.exe' : process.platform === 'darwin' ? 'open' : 'xdg-open';
-    const args = process.platform === 'win32' ? ['/c', 'start', url] : [url];
-    execFile(cmd, args, (err) => resolve(!err));
+    const args = process.platform === 'win32' ? ['/c', 'start', '""', url] : [url];
+    execFile(cmd, args, { timeout: 5000 }, (err) => resolve(!err));
   });
 }
 
