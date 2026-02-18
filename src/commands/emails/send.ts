@@ -1,7 +1,7 @@
 import { Command } from '@commander-js/extra-typings';
 import { readFileSync } from 'node:fs';
 import type { Resend } from 'resend';
-import { createClient } from '../../lib/client';
+import { requireClient } from '../../lib/client';
 import { promptForMissing, cancelAndExit } from '../../lib/prompts';
 import { createSpinner } from '../../lib/spinner';
 import { outputError, outputResult, errorMessage } from '../../lib/output';
@@ -92,15 +92,7 @@ Examples:
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as { apiKey?: string; json?: boolean };
 
-    let resend;
-    try {
-      resend = createClient(globalOpts.apiKey);
-    } catch (err) {
-      outputError(
-        { message: errorMessage(err, 'Failed to create client'), code: 'auth_error' },
-        { json: globalOpts.json }
-      );
-    }
+    const resend = requireClient(globalOpts);
 
     // Only fetch verified domains in interactive mode — non-interactive
     // callers (CI, agents, scripts) must pass --from explicitly.
@@ -157,7 +149,7 @@ Examples:
     const spinner = createSpinner('Sending email...', 'helix');
 
     try {
-      const result = await resend!.emails.send({
+      const result = await resend.emails.send({
         from: filled.from!,
         to: toAddresses,
         subject: filled.subject!,
