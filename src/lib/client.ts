@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import { resolveApiKey } from './config';
+import { errorMessage, outputError } from './output';
 
 export function createClient(flagValue?: string): Resend {
   const resolved = resolveApiKey(flagValue);
@@ -9,4 +10,15 @@ export function createClient(flagValue?: string): Resend {
     );
   }
   return new Resend(resolved.key);
+}
+
+export function requireClient(opts: { apiKey?: string; json?: boolean }): Resend {
+  try {
+    return createClient(opts.apiKey);
+  } catch (err) {
+    outputError(
+      { message: errorMessage(err, 'Failed to create client'), code: 'auth_error' },
+      { json: opts.json }
+    );
+  }
 }
