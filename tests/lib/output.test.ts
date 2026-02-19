@@ -1,4 +1,4 @@
-import { describe, test, expect, spyOn, afterEach, mock } from 'bun:test';
+import { describe, test, expect, spyOn, afterEach } from 'bun:test';
 import { outputResult, outputError } from '../../src/lib/output';
 
 describe('outputResult', () => {

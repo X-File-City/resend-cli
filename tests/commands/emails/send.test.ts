@@ -1,5 +1,6 @@
 import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
 import { join } from 'node:path';
+import { unlinkSync } from 'node:fs';
 import { ExitError, setNonInteractive, mockExitThrow } from '../../helpers';
 
 const mockSend = mock(async () => ({
@@ -185,7 +186,6 @@ describe('send command', () => {
       const callArgs = mockSend.mock.calls[0][0] as any;
       expect(callArgs.html).toBe('<h1>From file</h1>');
     } finally {
-      const { unlinkSync } = require('node:fs');
       unlinkSync(tmpFile);
     }
   });
