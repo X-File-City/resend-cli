@@ -43,7 +43,7 @@ Examples:
       await confirmDelete(id, `Delete API key ${id}? Any services using this key will stop working.`, globalOpts);
     }
 
-    const spinner = createSpinner('Deleting API key...', 'braille');
+    const spinner = createSpinner('Deleting API key...');
 
     try {
       const { error } = await resend.apiKeys.remove(id);

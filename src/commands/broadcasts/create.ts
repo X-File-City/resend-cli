@@ -109,7 +109,7 @@ Examples:
       text = result;
     }
 
-    const spinner = createSpinner('Creating broadcast...', 'braille');
+    const spinner = createSpinner('Creating broadcast...');
 
     try {
       const { data, error } = await resend.broadcasts.create({

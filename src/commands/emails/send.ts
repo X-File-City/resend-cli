@@ -140,7 +140,7 @@ Examples:
 
     const toAddresses = opts.to ?? [filled.to!];
 
-    const spinner = createSpinner('Sending email...', 'braille');
+    const spinner = createSpinner('Sending email...');
 
     try {
       const { data, error } = await resend.emails.send({

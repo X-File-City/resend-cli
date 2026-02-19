@@ -101,7 +101,7 @@ Examples:
       );
     }
 
-    const spinner = createSpinner('Validating API key...', 'braille');
+    const spinner = createSpinner('Validating API key...');
 
     try {
       const resend = new Resend(apiKey);

@@ -84,7 +84,7 @@ Examples:
 
     const properties = parsePropertiesJson(opts.properties, globalOpts);
     const segments = opts.segmentId ?? [];
-    const spinner = createSpinner('Creating contact...', 'braille');
+    const spinner = createSpinner('Creating contact...');
 
     try {
       const { data, error } = await resend.contacts.create({

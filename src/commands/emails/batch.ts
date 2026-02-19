@@ -105,7 +105,7 @@ Examples:
       }
     }
 
-    const spinner = createSpinner('Sending batch...', 'braille');
+    const spinner = createSpinner('Sending batch...');
 
     try {
       const { data, error } = await resend.batch.send(

@@ -41,7 +41,7 @@ Examples:
       await confirmDelete(id, `Delete broadcast ${id}? If scheduled, delivery will be cancelled.`, globalOpts);
     }
 
-    const spinner = createSpinner('Deleting broadcast...', 'braille');
+    const spinner = createSpinner('Deleting broadcast...');
 
     try {
       const { data, error } = await resend.broadcasts.remove(id);

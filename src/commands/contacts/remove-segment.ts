@@ -35,7 +35,7 @@ Examples:
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const resend = requireClient(globalOpts);
 
-    const spinner = createSpinner('Removing contact from segment...', 'braille');
+    const spinner = createSpinner('Removing contact from segment...');
 
     try {
       // segmentContactIdentifier resolves UUID vs email for the ContactSegmentsBaseOptions

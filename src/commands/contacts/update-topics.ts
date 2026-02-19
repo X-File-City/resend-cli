@@ -71,7 +71,7 @@ Examples:
       outputError({ message: 'Invalid --topics JSON. Expected an array of {id, subscription} objects.', code: 'invalid_topics' }, { json: globalOpts.json });
     }
 
-    const spinner = createSpinner('Updating topic subscriptions...', 'braille');
+    const spinner = createSpinner('Updating topic subscriptions...');
 
     try {
       // contactIdentifier's result is directly assignable: UpdateContactTopicsBaseOptions

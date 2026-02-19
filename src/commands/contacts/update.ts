@@ -48,7 +48,7 @@ Examples:
 
     const properties = parsePropertiesJson(opts.properties, globalOpts);
 
-    const spinner = createSpinner('Updating contact...', 'braille');
+    const spinner = createSpinner('Updating contact...');
 
     try {
       // contactIdentifier resolves UUID vs email. The spread of a discriminated

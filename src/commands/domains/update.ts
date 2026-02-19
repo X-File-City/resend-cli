@@ -56,7 +56,7 @@ Examples:
     if (openTracking !== undefined) payload.openTracking = openTracking;
     if (clickTracking !== undefined) payload.clickTracking = clickTracking;
 
-    const spinner = createSpinner('Updating domain...', 'braille');
+    const spinner = createSpinner('Updating domain...');
 
     try {
       const { data, error } = await resend.domains.update(payload);

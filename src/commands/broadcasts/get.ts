@@ -34,7 +34,7 @@ Examples:
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const resend = requireClient(globalOpts);
 
-    const spinner = createSpinner('Fetching broadcast...', 'braille');
+    const spinner = createSpinner('Fetching broadcast...');
 
     try {
       const { data, error } = await resend.broadcasts.get(id);

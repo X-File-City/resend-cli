@@ -54,7 +54,7 @@ Examples:
       segmentId = result;
     }
 
-    const spinner = createSpinner('Adding contact to segment...', 'braille');
+    const spinner = createSpinner('Adding contact to segment...');
 
     try {
       // segmentContactIdentifier resolves UUID vs email for the ContactSegmentsBaseOptions

@@ -40,7 +40,7 @@ Examples:
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const resend = requireClient(globalOpts);
 
-    const spinner = createSpinner('Fetching contact...', 'braille');
+    const spinner = createSpinner('Fetching contact...');
 
     try {
       const { data, error } = await resend.contacts.get(id);

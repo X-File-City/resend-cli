@@ -51,7 +51,7 @@ Examples:
       html = readHtmlFile(opts.htmlFile, globalOpts);
     }
 
-    const spinner = createSpinner('Updating broadcast...', 'braille');
+    const spinner = createSpinner('Updating broadcast...');
 
     try {
       const { data, error } = await resend.broadcasts.update(id, {

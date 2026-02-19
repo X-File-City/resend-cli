@@ -35,7 +35,7 @@ Examples:
 
     const resend = requireClient(globalOpts);
 
-    const spinner = createSpinner('Verifying domain...', 'braille');
+    const spinner = createSpinner('Verifying domain...');
 
     try {
       const { data, error } = await resend.domains.verify(id);

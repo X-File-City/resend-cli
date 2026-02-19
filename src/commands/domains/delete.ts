@@ -39,7 +39,7 @@ Examples:
       await confirmDelete(id, `Delete domain ${id}? This cannot be undone.`, globalOpts);
     }
 
-    const spinner = createSpinner('Deleting domain...', 'braille');
+    const spinner = createSpinner('Deleting domain...');
 
     try {
       const { error } = await resend.domains.remove(id);
