@@ -1,8 +1,7 @@
 import { Command } from '@commander-js/extra-typings';
-import * as p from '@clack/prompts';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
-import { cancelAndExit } from '../../lib/prompts';
+import { confirmDelete } from '../../lib/prompts';
 import { createSpinner } from '../../lib/spinner';
 import { outputError, outputResult, errorMessage } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
@@ -25,7 +24,7 @@ Global options (defined on root):
   --json           Force JSON output (also auto-enabled when stdout is piped)
 
 Output (--json or piped):
-  {"deleted":true,"id":"<id>"}
+  {"object":"api-key","id":"<id>","deleted":true}
 
 Errors (exit code 1):
   {"error":{"message":"<message>","code":"<code>"}}
@@ -40,18 +39,8 @@ Examples:
 
     const resend = requireClient(globalOpts);
 
-    if (!opts.yes && !isInteractive()) {
-      outputError(
-        { message: 'Use --yes to confirm deletion in non-interactive mode.', code: 'confirmation_required' },
-        { json: globalOpts.json }
-      );
-    }
-
-    if (!opts.yes && isInteractive()) {
-      const confirmed = await p.confirm({
-        message: `Delete API key ${id}? Any services using this key will stop working.`,
-      });
-      if (p.isCancel(confirmed) || !confirmed) cancelAndExit('Deletion cancelled.');
+    if (!opts.yes) {
+      await confirmDelete(id, `Delete API key ${id}? Any services using this key will stop working.`, globalOpts);
     }
 
     const spinner = createSpinner('Deleting API key...', 'braille');
@@ -69,7 +58,7 @@ Examples:
       if (!globalOpts.json && isInteractive()) {
         console.log('API key deleted.');
       } else {
-        outputResult({ deleted: true, id }, { json: globalOpts.json });
+        outputResult({ object: 'api-key', id, deleted: true }, { json: globalOpts.json });
       }
     } catch (err) {
       spinner.fail('Failed to delete API key');
