@@ -5,6 +5,7 @@ import { confirmDelete } from '../../lib/prompts';
 import { createSpinner } from '../../lib/spinner';
 import { outputError, outputResult, errorMessage } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
+import { buildHelpText } from '../../lib/help-text';
 
 export const deleteSegmentCommand = new Command('delete')
   .description('Delete a segment')
@@ -12,26 +13,18 @@ export const deleteSegmentCommand = new Command('delete')
   .option('--yes', 'Skip the confirmation prompt (required in non-interactive mode)')
   .addHelpText(
     'after',
-    `
-⚠ Deleting a segment removes it as a target for future broadcasts,
+    buildHelpText({
+      context: `Warning: Deleting a segment removes it as a target for future broadcasts,
   but does NOT delete the contacts within it.
 
-Non-interactive: --yes is required to confirm deletion when stdin/stdout is not a TTY.
-
-Global options (defined on root):
-  --api-key <key>  API key (or set RESEND_API_KEY env var)
-  --json           Force JSON output (also auto-enabled when stdout is piped)
-
-Output (--json or piped):
-  {"object":"segment","id":"<uuid>","deleted":true}
-
-Errors (exit code 1):
-  {"error":{"message":"<message>","code":"<code>"}}
-  Codes: auth_error | confirmation_required | delete_error
-
-Examples:
-  $ resend segments delete 78261eea-8f8b-4381-83c6-79fa7120f1cf --yes
-  $ resend segments delete 78261eea-8f8b-4381-83c6-79fa7120f1cf --yes --json`
+Non-interactive: --yes is required to confirm deletion when stdin/stdout is not a TTY.`,
+      output: `  {"object":"segment","id":"<uuid>","deleted":true}`,
+      errorCodes: ['auth_error', 'confirmation_required', 'delete_error'],
+      examples: [
+        'resend segments delete 78261eea-8f8b-4381-83c6-79fa7120f1cf --yes',
+        'resend segments delete 78261eea-8f8b-4381-83c6-79fa7120f1cf --yes --json',
+      ],
+    }),
   )
   .action(async (id, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;

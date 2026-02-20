@@ -6,32 +6,25 @@ import { cancelAndExit } from '../../lib/prompts';
 import { createSpinner } from '../../lib/spinner';
 import { outputError, outputResult, errorMessage } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
+import { buildHelpText } from '../../lib/help-text';
 
 export const createSegmentCommand = new Command('create')
   .description('Create a new segment')
   .option('--name <name>', 'Segment name (required)')
   .addHelpText(
     'after',
-    `
-Segments are named groups of contacts. Broadcasts target segments via segment_id.
+    buildHelpText({
+      context: `Segments are named groups of contacts. Broadcasts target segments via segment_id.
 Contacts can belong to multiple segments. Audiences are deprecated — use segments instead.
 
-Non-interactive: --name is required.
-
-Global options (defined on root):
-  --api-key <key>  API key (or set RESEND_API_KEY env var)
-  --json           Force JSON output (also auto-enabled when stdout is piped)
-
-Output (--json or piped):
-  {"object":"segment","id":"<uuid>","name":"<name>"}
-
-Errors (exit code 1):
-  {"error":{"message":"<message>","code":"<code>"}}
-  Codes: auth_error | missing_name | create_error
-
-Examples:
-  $ resend segments create --name "Newsletter Subscribers"
-  $ resend segments create --name "Beta Users" --json`
+Non-interactive: --name is required.`,
+      output: `  {"object":"segment","id":"<uuid>","name":"<name>"}`,
+      errorCodes: ['auth_error', 'missing_name', 'create_error'],
+      examples: [
+        'resend segments create --name "Newsletter Subscribers"',
+        'resend segments create --name "Beta Users" --json',
+      ],
+    }),
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;

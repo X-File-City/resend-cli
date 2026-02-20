@@ -6,6 +6,7 @@ import { outputError, outputResult, errorMessage } from '../../lib/output';
 import { parseLimitOpt, buildPaginationOpts, printPaginationHint } from '../../lib/pagination';
 import { isInteractive } from '../../lib/tty';
 import { renderSegmentsTable } from './utils';
+import { buildHelpText } from '../../lib/help-text';
 
 export const listSegmentsCommand = new Command('list')
   .description('List all segments')
@@ -14,29 +15,21 @@ export const listSegmentsCommand = new Command('list')
   .option('--before <cursor>', 'Return segments before this cursor (previous page)')
   .addHelpText(
     'after',
-    `
-Pagination: use --after or --before with a segment ID as the cursor.
+    buildHelpText({
+      context: `Pagination: use --after or --before with a segment ID as the cursor.
   Only one of --after or --before may be used at a time.
   The response includes has_more: true when additional pages exist.
 
 Use "resend segments list" to discover segment IDs for use with broadcasts
-or "resend contacts add-segment".
-
-Global options (defined on root):
-  --api-key <key>  API key (or set RESEND_API_KEY env var)
-  --json           Force JSON output (also auto-enabled when stdout is piped)
-
-Output (--json or piped):
-  {"object":"list","data":[{"id":"<uuid>","name":"<name>","created_at":"<iso-date>"}],"has_more":false}
-
-Errors (exit code 1):
-  {"error":{"message":"<message>","code":"<code>"}}
-  Codes: auth_error | invalid_limit | list_error
-
-Examples:
-  $ resend segments list
-  $ resend segments list --limit 25 --json
-  $ resend segments list --after 78261eea-8f8b-4381-83c6-79fa7120f1cf --json`
+or "resend contacts add-segment".`,
+      output: `  {"object":"list","data":[{"id":"<uuid>","name":"<name>","created_at":"<iso-date>"}],"has_more":false}`,
+      errorCodes: ['auth_error', 'invalid_limit', 'list_error'],
+      examples: [
+        'resend segments list',
+        'resend segments list --limit 25 --json',
+        'resend segments list --after 78261eea-8f8b-4381-83c6-79fa7120f1cf --json',
+      ],
+    }),
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
