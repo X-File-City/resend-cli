@@ -6,6 +6,7 @@ import { cancelAndExit } from '../../lib/prompts';
 import { createSpinner } from '../../lib/spinner';
 import { outputError, outputResult, errorMessage } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
+import { buildHelpText } from '../../lib/help-text';
 import { DEPRECATION_MSG, MIGRATION_URL } from './utils';
 
 export const createAudienceCommand = new Command('create')
@@ -13,30 +14,22 @@ export const createAudienceCommand = new Command('create')
   .option('--name <name>', 'Audience name (required)')
   .addHelpText(
     'after',
-    `
-⚠ DEPRECATED: Audiences are deprecated. Use segments instead.
+    buildHelpText({
+      context: `⚠ DEPRECATED: Audiences are deprecated. Use segments instead.
   Migration guide: ${MIGRATION_URL}
 
-Non-interactive: --name is required.
-
-Global options (defined on root):
-  --api-key <key>  API key (or set RESEND_API_KEY env var)
-  --json           Force JSON output (also auto-enabled when stdout is piped)
-
-Output (--json or piped):
-  {
+Non-interactive: --name is required.`,
+      output: `  {
     "deprecated": true,
     "deprecation_message": "Audiences are deprecated. Use segments instead.",
     "data": {"object":"segment","id":"<uuid>","name":"<name>"}
-  }
-
-Errors (exit code 1):
-  {"error":{"message":"<message>","code":"<code>"}}
-  Codes: auth_error | missing_name | create_error
-
-Examples:
-  $ resend audiences create --name "My Audience"
-  $ resend audiences create --name "My Audience" --json`
+  }`,
+      errorCodes: ['auth_error', 'missing_name', 'create_error'],
+      examples: [
+        'resend audiences create --name "My Audience"',
+        'resend audiences create --name "My Audience" --json',
+      ],
+    }),
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;

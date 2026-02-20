@@ -1,6 +1,7 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import { isInteractive } from '../../lib/tty';
+import { buildHelpText } from '../../lib/help-text';
 import { createAudienceCommand } from './create';
 import { getAudienceCommand } from './get';
 import { listAudiencesCommand } from './list';
@@ -11,8 +12,8 @@ export const audiencesCommand = new Command('audiences')
   .description('Manage audiences [deprecated — use `resend segments`]')
   .addHelpText(
     'after',
-    `
-⚠ DEPRECATED: Audiences are the legacy predecessor to Segments. All new work should
+    buildHelpText({
+      context: `⚠ DEPRECATED: Audiences are the legacy predecessor to Segments. All new work should
   use "resend segments". Existing audiences can still be listed and deleted during
   migration, but no new features will be added to this namespace.
 
@@ -24,16 +25,13 @@ Subcommands:
   list     List all audiences
   delete   Delete an audience
 
-Use "resend segments --help" to see the modern equivalent.
-
-Global options (defined on root):
-  --api-key <key>  API key (or set RESEND_API_KEY env var)
-  --json           Force JSON output (also auto-enabled when stdout is piped)
-
-Examples:
-  $ resend audiences list --json              # export all audience IDs before migration
-  $ resend audiences delete <id> --yes --json # delete audiences after migrating contacts
-  $ resend segments list                      # modern equivalent`
+Use "resend segments --help" to see the modern equivalent.`,
+      examples: [
+        'resend audiences list --json              # export all audience IDs before migration',
+        'resend audiences delete <id> --yes --json # delete audiences after migrating contacts',
+        'resend segments list                      # modern equivalent',
+      ],
+    }),
   )
   .hook('preAction', (_thisCommand, actionCommand) => {
     const opts = actionCommand.optsWithGlobals() as GlobalOpts;
