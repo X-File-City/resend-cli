@@ -1,8 +1,8 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 
@@ -32,35 +32,23 @@ Scheduling:
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const resend = requireClient(globalOpts);
 
-    const spinner = createSpinner('Sending broadcast...');
-
-    try {
-      const { data, error } = await resend.broadcasts.send(id, {
+    const data = await withSpinner(
+      { loading: 'Sending broadcast...', success: 'Broadcast sent', fail: 'Failed to send broadcast' },
+      () => resend.broadcasts.send(id, {
         ...(opts.scheduledAt && { scheduledAt: opts.scheduledAt }),
-      });
+      }),
+      'send_error',
+      globalOpts,
+    );
 
-      if (error) {
-        spinner.fail('Failed to send broadcast');
-        outputError({ message: error.message, code: 'send_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Broadcast sent');
-
-      if (!globalOpts.json && isInteractive()) {
-        const d = data!;
-        if (opts.scheduledAt) {
-          console.log(`\nBroadcast scheduled: ${d.id} (sends: ${opts.scheduledAt})`);
-        } else {
-          console.log(`\nBroadcast sent: ${d.id}`);
-        }
+    if (!globalOpts.json && isInteractive()) {
+      const d = data;
+      if (opts.scheduledAt) {
+        console.log(`\nBroadcast scheduled: ${d.id} (sends: ${opts.scheduledAt})`);
       } else {
-        outputResult(data!, { json: globalOpts.json });
+        console.log(`\nBroadcast sent: ${d.id}`);
       }
-    } catch (err) {
-      spinner.fail('Failed to send broadcast');
-      outputError(
-        { message: errorMessage(err, 'Unknown error'), code: 'send_error' },
-        { json: globalOpts.json }
-      );
+    } else {
+      outputResult(data, { json: globalOpts.json });
     }
   });

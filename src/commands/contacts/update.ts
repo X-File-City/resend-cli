@@ -2,8 +2,8 @@ import { Command } from '@commander-js/extra-typings';
 import type { UpdateContactOptions } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 import { contactIdentifier, parsePropertiesJson } from './utils';
@@ -42,33 +42,25 @@ Properties: --properties merges the given JSON object with existing properties.
 
     const properties = parsePropertiesJson(opts.properties, globalOpts);
 
-    const spinner = createSpinner('Updating contact...');
+    // contactIdentifier resolves UUID vs email. The spread of a discriminated
+    // union requires an explicit cast because TypeScript cannot narrow it
+    // through a spread at the call site.
+    const payload = {
+      ...contactIdentifier(id),
+      ...(opts.unsubscribed !== undefined && { unsubscribed: opts.unsubscribed }),
+      ...(properties && { properties }),
+    } as UpdateContactOptions;
 
-    try {
-      // contactIdentifier resolves UUID vs email. The spread of a discriminated
-      // union requires an explicit cast because TypeScript cannot narrow it
-      // through a spread at the call site.
-      const payload = {
-        ...contactIdentifier(id),
-        ...(opts.unsubscribed !== undefined && { unsubscribed: opts.unsubscribed }),
-        ...(properties && { properties }),
-      } as UpdateContactOptions;
+    const data = await withSpinner(
+      { loading: 'Updating contact...', success: 'Contact updated', fail: 'Failed to update contact' },
+      () => resend.contacts.update(payload),
+      'update_error',
+      globalOpts,
+    );
 
-      const { data, error } = await resend.contacts.update(payload);
-
-      if (error) {
-        spinner.fail('Failed to update contact');
-        outputError({ message: error.message, code: 'update_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Contact updated');
-      if (!globalOpts.json && isInteractive()) {
-        console.log(`Contact updated: ${id}`);
-      } else {
-        outputResult(data!, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to update contact');
-      outputError({ message: errorMessage(err, 'Unknown error'), code: 'update_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      console.log(`Contact updated: ${id}`);
+    } else {
+      outputResult(data, { json: globalOpts.json });
     }
   });

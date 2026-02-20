@@ -1,8 +1,8 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 import { renderContactTopicsTable, contactIdentifier } from './utils';
@@ -32,28 +32,18 @@ Use "resend contacts update-topics <id>" to change subscription statuses.`,
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const resend = requireClient(globalOpts);
 
-    const spinner = createSpinner('Fetching topic subscriptions...');
+    // ListContactTopicsBaseOptions uses optional { id?, email? } (not a discriminated
+    // union), so contactIdentifier's result is directly assignable without a cast.
+    const list = await withSpinner(
+      { loading: 'Fetching topic subscriptions...', success: 'Topic subscriptions fetched', fail: 'Failed to list topic subscriptions' },
+      () => resend.contacts.topics.list(contactIdentifier(id)),
+      'list_error',
+      globalOpts,
+    );
 
-    try {
-      // ListContactTopicsBaseOptions uses optional { id?, email? } (not a discriminated
-      // union), so contactIdentifier's result is directly assignable without a cast.
-      const { data, error } = await resend.contacts.topics.list(contactIdentifier(id));
-
-      if (error) {
-        spinner.fail('Failed to list topic subscriptions');
-        outputError({ message: error.message, code: 'list_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Topic subscriptions fetched');
-
-      const list = data!;
-      if (!globalOpts.json && isInteractive()) {
-        console.log(renderContactTopicsTable(list.data));
-      } else {
-        outputResult(list, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to list topic subscriptions');
-      outputError({ message: errorMessage(err, 'Unknown error'), code: 'list_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      console.log(renderContactTopicsTable(list.data));
+    } else {
+      outputResult(list, { json: globalOpts.json });
     }
   });

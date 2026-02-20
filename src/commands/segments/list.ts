@@ -1,8 +1,8 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputResult } from '../../lib/output';
 import { parseLimitOpt, buildPaginationOpts, printPaginationHint } from '../../lib/pagination';
 import { isInteractive } from '../../lib/tty';
 import { renderSegmentsTable } from './utils';
@@ -38,27 +38,17 @@ or "resend contacts add-segment".`,
     const limit = parseLimitOpt(opts.limit, globalOpts);
     const paginationOpts = buildPaginationOpts(limit, opts.after, opts.before);
 
-    const spinner = createSpinner('Fetching segments...');
+    const list = await withSpinner(
+      { loading: 'Fetching segments...', success: 'Segments fetched', fail: 'Failed to list segments' },
+      () => resend.segments.list(paginationOpts),
+      'list_error',
+      globalOpts,
+    );
 
-    try {
-      const { data, error } = await resend.segments.list(paginationOpts);
-
-      if (error) {
-        spinner.fail('Failed to list segments');
-        outputError({ message: error.message, code: 'list_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Segments fetched');
-
-      const list = data!;
-      if (!globalOpts.json && isInteractive()) {
-        console.log(renderSegmentsTable(list.data));
-        printPaginationHint(list);
-      } else {
-        outputResult(list, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to list segments');
-      outputError({ message: errorMessage(err, 'Unknown error'), code: 'list_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      console.log(renderSegmentsTable(list.data));
+      printPaginationHint(list);
+    } else {
+      outputResult(list, { json: globalOpts.json });
     }
   });

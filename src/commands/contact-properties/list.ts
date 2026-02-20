@@ -1,8 +1,8 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputResult } from '../../lib/output';
 import { parseLimitOpt, buildPaginationOpts, printPaginationHint } from '../../lib/pagination';
 import { isInteractive } from '../../lib/tty';
 import { renderContactPropertiesTable } from './utils';
@@ -41,27 +41,17 @@ export const listContactPropertiesCommand = new Command('list')
     const limit = parseLimitOpt(opts.limit, globalOpts);
     const paginationOpts = buildPaginationOpts(limit, opts.after, opts.before);
 
-    const spinner = createSpinner('Fetching contact properties...');
+    const list = await withSpinner(
+      { loading: 'Fetching contact properties...', success: 'Contact properties fetched', fail: 'Failed to list contact properties' },
+      () => resend.contactProperties.list(paginationOpts),
+      'list_error',
+      globalOpts,
+    );
 
-    try {
-      const { data, error } = await resend.contactProperties.list(paginationOpts);
-
-      if (error) {
-        spinner.fail('Failed to list contact properties');
-        outputError({ message: error.message, code: 'list_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Contact properties fetched');
-
-      const list = data!;
-      if (!globalOpts.json && isInteractive()) {
-        console.log(renderContactPropertiesTable(list.data));
-        printPaginationHint(list);
-      } else {
-        outputResult(list, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to list contact properties');
-      outputError({ message: errorMessage(err, 'Unknown error'), code: 'list_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      console.log(renderContactPropertiesTable(list.data));
+      printPaginationHint(list);
+    } else {
+      outputResult(list, { json: globalOpts.json });
     }
   });

@@ -4,8 +4,8 @@ import type { AddContactSegmentOptions } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { cancelAndExit } from '../../lib/prompts';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputError, outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 import { segmentContactIdentifier } from './utils';
@@ -47,28 +47,20 @@ Non-interactive: --segment-id is required.`,
       segmentId = result;
     }
 
-    const spinner = createSpinner('Adding contact to segment...');
+    // segmentContactIdentifier resolves UUID vs email for the ContactSegmentsBaseOptions
+    // discriminated union. The spread of that union requires an explicit cast.
+    const payload = { ...segmentContactIdentifier(contactId), segmentId } as AddContactSegmentOptions;
 
-    try {
-      // segmentContactIdentifier resolves UUID vs email for the ContactSegmentsBaseOptions
-      // discriminated union. The spread of that union requires an explicit cast.
-      const payload = { ...segmentContactIdentifier(contactId), segmentId } as AddContactSegmentOptions;
+    const data = await withSpinner(
+      { loading: 'Adding contact to segment...', success: 'Contact added to segment', fail: 'Failed to add contact to segment' },
+      () => resend.contacts.segments.add(payload),
+      'add_segment_error',
+      globalOpts,
+    );
 
-      const { data, error } = await resend.contacts.segments.add(payload);
-
-      if (error) {
-        spinner.fail('Failed to add contact to segment');
-        outputError({ message: error.message, code: 'add_segment_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Contact added to segment');
-      if (!globalOpts.json && isInteractive()) {
-        console.log(`Contact added to segment: ${segmentId}`);
-      } else {
-        outputResult(data!, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to add contact to segment');
-      outputError({ message: errorMessage(err, 'Unknown error'), code: 'add_segment_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      console.log(`Contact added to segment: ${segmentId}`);
+    } else {
+      outputResult(data, { json: globalOpts.json });
     }
   });

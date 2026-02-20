@@ -2,8 +2,8 @@ import { Command } from '@commander-js/extra-typings';
 import type { RemoveContactSegmentOptions } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 import { segmentContactIdentifier } from './utils';
@@ -29,28 +29,20 @@ The <segmentId> argument must be a segment UUID (not an email).`,
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const resend = requireClient(globalOpts);
 
-    const spinner = createSpinner('Removing contact from segment...');
+    // segmentContactIdentifier resolves UUID vs email for the ContactSegmentsBaseOptions
+    // discriminated union. The spread of that union requires an explicit cast.
+    const payload = { ...segmentContactIdentifier(contactId), segmentId } as RemoveContactSegmentOptions;
 
-    try {
-      // segmentContactIdentifier resolves UUID vs email for the ContactSegmentsBaseOptions
-      // discriminated union. The spread of that union requires an explicit cast.
-      const payload = { ...segmentContactIdentifier(contactId), segmentId } as RemoveContactSegmentOptions;
+    const data = await withSpinner(
+      { loading: 'Removing contact from segment...', success: 'Contact removed from segment', fail: 'Failed to remove contact from segment' },
+      () => resend.contacts.segments.remove(payload),
+      'remove_segment_error',
+      globalOpts,
+    );
 
-      const { data, error } = await resend.contacts.segments.remove(payload);
-
-      if (error) {
-        spinner.fail('Failed to remove contact from segment');
-        outputError({ message: error.message, code: 'remove_segment_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Contact removed from segment');
-      if (!globalOpts.json && isInteractive()) {
-        console.log(`Contact removed from segment: ${segmentId}`);
-      } else {
-        outputResult(data!, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to remove contact from segment');
-      outputError({ message: errorMessage(err, 'Unknown error'), code: 'remove_segment_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      console.log(`Contact removed from segment: ${segmentId}`);
+    } else {
+      outputResult(data, { json: globalOpts.json });
     }
   });

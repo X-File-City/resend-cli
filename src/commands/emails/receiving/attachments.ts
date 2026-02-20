@@ -1,8 +1,8 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../../lib/client';
 import { requireClient } from '../../../lib/client';
-import { createSpinner } from '../../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../../lib/output';
+import { withSpinner } from '../../../lib/spinner';
+import { outputResult } from '../../../lib/output';
 import { parseLimitOpt, buildPaginationOpts, printPaginationHint } from '../../../lib/pagination';
 import { isInteractive } from '../../../lib/tty';
 import { buildHelpText } from '../../../lib/help-text';
@@ -36,27 +36,17 @@ export const listAttachmentsCommand = new Command('attachments')
     const limit = parseLimitOpt(opts.limit, globalOpts);
     const paginationOpts = buildPaginationOpts(limit, opts.after, opts.before);
 
-    const spinner = createSpinner('Fetching attachments...');
+    const list = await withSpinner(
+      { loading: 'Fetching attachments...', success: 'Attachments fetched', fail: 'Failed to list attachments' },
+      () => resend.emails.receiving.attachments.list({ emailId, ...paginationOpts }),
+      'fetch_error',
+      globalOpts,
+    );
 
-    try {
-      const { data, error } = await resend.emails.receiving.attachments.list({ emailId, ...paginationOpts });
-
-      if (error) {
-        spinner.fail('Failed to list attachments');
-        outputError({ message: error.message, code: 'fetch_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Attachments fetched');
-
-      const list = data!;
-      if (!globalOpts.json && isInteractive()) {
-        console.log(renderAttachmentsTable(list.data));
-        printPaginationHint(list);
-      } else {
-        outputResult(list, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to list attachments');
-      outputError({ message: errorMessage(err, 'Unknown error'), code: 'fetch_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      console.log(renderAttachmentsTable(list.data));
+      printPaginationHint(list);
+    } else {
+      outputResult(list, { json: globalOpts.json });
     }
   });

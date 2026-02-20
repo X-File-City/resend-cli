@@ -1,8 +1,8 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../../lib/client';
 import { requireClient } from '../../../lib/client';
-import { createSpinner } from '../../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../../lib/output';
+import { withSpinner } from '../../../lib/spinner';
+import { outputResult } from '../../../lib/output';
 import { isInteractive } from '../../../lib/tty';
 import { buildHelpText } from '../../../lib/help-text';
 
@@ -28,32 +28,23 @@ export const getAttachmentCommand = new Command('attachment')
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const resend = requireClient(globalOpts);
 
-    const spinner = createSpinner('Fetching attachment...');
+    const data = await withSpinner(
+      { loading: 'Fetching attachment...', success: 'Attachment fetched', fail: 'Failed to fetch attachment' },
+      () => resend.emails.receiving.attachments.get({ emailId, id: attachmentId }),
+      'fetch_error',
+      globalOpts,
+    );
 
-    try {
-      const { data, error } = await resend.emails.receiving.attachments.get({ emailId, id: attachmentId });
-
-      if (error) {
-        spinner.fail('Failed to fetch attachment');
-        outputError({ message: error.message, code: 'fetch_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Attachment fetched');
-
-      if (!globalOpts.json && isInteractive()) {
-        const d = data!;
-        console.log(`\n${d.filename ?? '(unnamed)'}`);
-        console.log(`ID:           ${d.id}`);
-        console.log(`Content-Type: ${d.content_type}`);
-        console.log(`Size:         ${d.size} bytes`);
-        console.log(`Disposition:  ${d.content_disposition}`);
-        console.log(`Download URL: ${d.download_url}`);
-        console.log(`Expires:      ${d.expires_at}`);
-      } else {
-        outputResult(data!, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to fetch attachment');
-      outputError({ message: errorMessage(err, 'Unknown error'), code: 'fetch_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      const d = data;
+      console.log(`\n${d.filename ?? '(unnamed)'}`);
+      console.log(`ID:           ${d.id}`);
+      console.log(`Content-Type: ${d.content_type}`);
+      console.log(`Size:         ${d.size} bytes`);
+      console.log(`Disposition:  ${d.content_disposition}`);
+      console.log(`Download URL: ${d.download_url}`);
+      console.log(`Expires:      ${d.expires_at}`);
+    } else {
+      outputResult(data, { json: globalOpts.json });
     }
   });

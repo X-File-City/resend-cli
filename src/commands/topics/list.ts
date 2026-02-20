@@ -1,8 +1,8 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { renderTopicsTable } from './utils';
 import { buildHelpText } from '../../lib/help-text';
@@ -26,26 +26,16 @@ contacts is handled via "resend contacts topics <contactId>".`,
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const resend = requireClient(globalOpts);
 
-    const spinner = createSpinner('Fetching topics...');
+    const list = await withSpinner(
+      { loading: 'Fetching topics...', success: 'Topics fetched', fail: 'Failed to list topics' },
+      () => resend.topics.list(),
+      'list_error',
+      globalOpts,
+    );
 
-    try {
-      const { data, error } = await resend.topics.list();
-
-      if (error) {
-        spinner.fail('Failed to list topics');
-        outputError({ message: error.message, code: 'list_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Topics fetched');
-
-      const list = data!;
-      if (!globalOpts.json && isInteractive()) {
-        console.log(renderTopicsTable(list.data));
-      } else {
-        outputResult(list, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to list topics');
-      outputError({ message: errorMessage(err, 'Unknown error'), code: 'list_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      console.log(renderTopicsTable(list.data));
+    } else {
+      outputResult(list, { json: globalOpts.json });
     }
   });

@@ -3,8 +3,8 @@ import * as p from '@clack/prompts';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { cancelAndExit } from '../../lib/prompts';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputError, outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 import { DEPRECATION_MSG, MIGRATION_URL } from './utils';
@@ -50,27 +50,18 @@ Non-interactive: --name is required.`,
       name = result;
     }
 
-    const spinner = createSpinner('Creating audience...');
+    const data = await withSpinner(
+      { loading: 'Creating audience...', success: 'Audience created', fail: 'Failed to create audience' },
+      () => resend.audiences.create({ name: name! }),
+      'create_error',
+      globalOpts,
+    );
 
-    try {
-      const { data, error } = await resend.audiences.create({ name: name! });
-
-      if (error) {
-        spinner.fail('Failed to create audience');
-        outputError({ message: error.message, code: 'create_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Audience created');
-
-      if (!globalOpts.json && isInteractive()) {
-        const d = data!;
-        console.log(`\nAudience created: ${d.id}`);
-        console.log(`Name: ${d.name}`);
-      } else {
-        outputResult({ deprecated: true, deprecation_message: DEPRECATION_MSG, data }, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to create audience');
-      outputError({ message: errorMessage(err, 'Unknown error'), code: 'create_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      const d = data;
+      console.log(`\nAudience created: ${d.id}`);
+      console.log(`Name: ${d.name}`);
+    } else {
+      outputResult({ deprecated: true, deprecation_message: DEPRECATION_MSG, data }, { json: globalOpts.json });
     }
   });

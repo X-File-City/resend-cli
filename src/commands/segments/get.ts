@@ -1,8 +1,8 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 
@@ -24,28 +24,18 @@ export const getSegmentCommand = new Command('get')
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const resend = requireClient(globalOpts);
 
-    const spinner = createSpinner('Fetching segment...');
+    const data = await withSpinner(
+      { loading: 'Fetching segment...', success: 'Segment fetched', fail: 'Failed to fetch segment' },
+      () => resend.segments.get(id),
+      'fetch_error',
+      globalOpts,
+    );
 
-    try {
-      const { data, error } = await resend.segments.get(id);
-
-      if (error) {
-        spinner.fail('Failed to fetch segment');
-        outputError({ message: error.message, code: 'fetch_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Segment fetched');
-
-      if (!globalOpts.json && isInteractive()) {
-        const d = data!;
-        console.log(`\n${d.name}`);
-        console.log(`ID: ${d.id}`);
-        console.log(`Created: ${d.created_at}`);
-      } else {
-        outputResult(data!, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to fetch segment');
-      outputError({ message: errorMessage(err, 'Unknown error'), code: 'fetch_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      console.log(`\n${data.name}`);
+      console.log(`ID: ${data.id}`);
+      console.log(`Created: ${data.created_at}`);
+    } else {
+      outputResult(data, { json: globalOpts.json });
     }
   });

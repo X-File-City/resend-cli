@@ -1,8 +1,8 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 import { renderDnsRecordsTable, statusIndicator } from './utils';
@@ -27,36 +27,23 @@ export const getDomainCommand = new Command('get')
 
     const resend = requireClient(globalOpts);
 
-    const spinner = createSpinner('Fetching domain...');
+    const d = await withSpinner(
+      { loading: 'Fetching domain...', success: 'Domain fetched', fail: 'Failed to fetch domain' },
+      () => resend.domains.get(id),
+      'fetch_error',
+      globalOpts,
+    );
 
-    try {
-      const { data, error } = await resend.domains.get(id);
-
-      if (error) {
-        spinner.fail('Failed to fetch domain');
-        outputError({ message: error.message, code: 'fetch_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      console.log(`\n${d.name} — ${statusIndicator(d.status)}`);
+      console.log(`ID: ${d.id}`);
+      console.log(`Region: ${d.region}`);
+      console.log(`Created: ${d.created_at}`);
+      if (d.records.length > 0) {
+        console.log('\nDNS Records:');
+        console.log(renderDnsRecordsTable(d.records, d.name));
       }
-
-      spinner.stop('Domain fetched');
-
-      const d = data!;
-      if (!globalOpts.json && isInteractive()) {
-        console.log(`\n${d.name} — ${statusIndicator(d.status)}`);
-        console.log(`ID: ${d.id}`);
-        console.log(`Region: ${d.region}`);
-        console.log(`Created: ${d.created_at}`);
-        if (d.records.length > 0) {
-          console.log('\nDNS Records:');
-          console.log(renderDnsRecordsTable(d.records, d.name));
-        }
-      } else {
-        outputResult(d, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to fetch domain');
-      outputError(
-        { message: errorMessage(err, 'Unknown error'), code: 'fetch_error' },
-        { json: globalOpts.json }
-      );
+    } else {
+      outputResult(d, { json: globalOpts.json });
     }
   });

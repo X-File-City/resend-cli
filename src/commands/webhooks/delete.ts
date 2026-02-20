@@ -2,8 +2,8 @@ import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { confirmDelete } from '../../lib/prompts';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 
@@ -40,25 +40,16 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
       );
     }
 
-    const spinner = createSpinner('Deleting webhook...');
+    await withSpinner(
+      { loading: 'Deleting webhook...', success: 'Webhook deleted', fail: 'Failed to delete webhook' },
+      () => resend.webhooks.remove(id),
+      'delete_error',
+      globalOpts,
+    );
 
-    try {
-      const { error } = await resend.webhooks.remove(id);
-
-      if (error) {
-        spinner.fail('Failed to delete webhook');
-        outputError({ message: error.message, code: 'delete_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Webhook deleted');
-
-      if (!globalOpts.json && isInteractive()) {
-        console.log('Webhook deleted.');
-      } else {
-        outputResult({ object: 'webhook', id, deleted: true }, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to delete webhook');
-      outputError({ message: errorMessage(err, 'Unknown error'), code: 'delete_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      console.log('Webhook deleted.');
+    } else {
+      outputResult({ object: 'webhook', id, deleted: true }, { json: globalOpts.json });
     }
   });

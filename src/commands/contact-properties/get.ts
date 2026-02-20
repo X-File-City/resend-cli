@@ -1,8 +1,8 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 
@@ -31,29 +31,19 @@ export const getContactPropertyCommand = new Command('get')
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const resend = requireClient(globalOpts);
 
-    const spinner = createSpinner('Fetching contact property...');
+    const data = await withSpinner(
+      { loading: 'Fetching contact property...', success: 'Contact property fetched', fail: 'Failed to fetch contact property' },
+      () => resend.contactProperties.get(id),
+      'fetch_error',
+      globalOpts,
+    );
 
-    try {
-      const { data, error } = await resend.contactProperties.get(id);
-
-      if (error) {
-        spinner.fail('Failed to fetch contact property');
-        outputError({ message: error.message, code: 'fetch_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Contact property fetched');
-
-      if (!globalOpts.json && isInteractive()) {
-        const d = data!;
-        console.log(`\n${d.key} (${d.type})`);
-        console.log(`ID: ${d.id}`);
-        console.log(`Created: ${d.createdAt}`);
-        console.log(`Fallback value: ${d.fallbackValue ?? '(none)'}`);
-      } else {
-        outputResult(data!, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to fetch contact property');
-      outputError({ message: errorMessage(err, 'Unknown error'), code: 'fetch_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      console.log(`\n${data.key} (${data.type})`);
+      console.log(`ID: ${data.id}`);
+      console.log(`Created: ${data.createdAt}`);
+      console.log(`Fallback value: ${data.fallbackValue ?? '(none)'}`);
+    } else {
+      outputResult(data, { json: globalOpts.json });
     }
   });

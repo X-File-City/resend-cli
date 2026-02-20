@@ -3,8 +3,8 @@ import * as p from '@clack/prompts';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { cancelAndExit } from '../../lib/prompts';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputError, outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 import { contactIdentifier, parseTopicsJson } from './utils';
@@ -58,26 +58,18 @@ Topics not included in the array are left unchanged.`,
 
     const topics = parseTopicsJson(topicsJson, globalOpts);
 
-    const spinner = createSpinner('Updating topic subscriptions...');
+    // contactIdentifier's result is directly assignable: UpdateContactTopicsBaseOptions
+    // uses optional { id?, email? } (not a discriminated union).
+    const data = await withSpinner(
+      { loading: 'Updating topic subscriptions...', success: 'Topic subscriptions updated', fail: 'Failed to update topic subscriptions' },
+      () => resend.contacts.topics.update({ ...contactIdentifier(id), topics }),
+      'update_topics_error',
+      globalOpts,
+    );
 
-    try {
-      // contactIdentifier's result is directly assignable: UpdateContactTopicsBaseOptions
-      // uses optional { id?, email? } (not a discriminated union).
-      const { data, error } = await resend.contacts.topics.update({ ...contactIdentifier(id), topics });
-
-      if (error) {
-        spinner.fail('Failed to update topic subscriptions');
-        outputError({ message: error.message, code: 'update_topics_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Topic subscriptions updated');
-      if (!globalOpts.json && isInteractive()) {
-        console.log(`Topic subscriptions updated for contact: ${id}`);
-      } else {
-        outputResult(data!, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to update topic subscriptions');
-      outputError({ message: errorMessage(err, 'Unknown error'), code: 'update_topics_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      console.log(`Topic subscriptions updated for contact: ${id}`);
+    } else {
+      outputResult(data, { json: globalOpts.json });
     }
   });

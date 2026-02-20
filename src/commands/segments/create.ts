@@ -3,8 +3,8 @@ import * as p from '@clack/prompts';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { cancelAndExit } from '../../lib/prompts';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputError, outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 
@@ -45,27 +45,17 @@ Non-interactive: --name is required.`,
       name = result;
     }
 
-    const spinner = createSpinner('Creating segment...');
+    const data = await withSpinner(
+      { loading: 'Creating segment...', success: 'Segment created', fail: 'Failed to create segment' },
+      () => resend.segments.create({ name: name! }),
+      'create_error',
+      globalOpts,
+    );
 
-    try {
-      const { data, error } = await resend.segments.create({ name: name! });
-
-      if (error) {
-        spinner.fail('Failed to create segment');
-        outputError({ message: error.message, code: 'create_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Segment created');
-
-      if (!globalOpts.json && isInteractive()) {
-        const d = data!;
-        console.log(`\nSegment created: ${d.id}`);
-        console.log(`Name: ${d.name}`);
-      } else {
-        outputResult(data!, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to create segment');
-      outputError({ message: errorMessage(err, 'Unknown error'), code: 'create_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      console.log(`\nSegment created: ${data.id}`);
+      console.log(`Name: ${data.name}`);
+    } else {
+      outputResult(data, { json: globalOpts.json });
     }
   });

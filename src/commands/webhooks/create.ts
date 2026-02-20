@@ -4,8 +4,8 @@ import type { WebhookEvent } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { cancelAndExit } from '../../lib/prompts';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputError, outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 import { ALL_WEBHOOK_EVENTS } from './utils';
@@ -88,32 +88,22 @@ Non-interactive: --endpoint and --events are required.`,
       selectedEvents = result;
     }
 
-    const spinner = createSpinner('Creating webhook...');
-
-    try {
-      const { data, error } = await resend.webhooks.create({
+    const d = await withSpinner(
+      { loading: 'Creating webhook...', success: 'Webhook created', fail: 'Failed to create webhook' },
+      () => resend.webhooks.create({
         endpoint: endpoint!,
         events: selectedEvents,
-      });
+      }),
+      'create_error',
+      globalOpts,
+    );
 
-      if (error) {
-        spinner.fail('Failed to create webhook');
-        outputError({ message: error.message, code: 'create_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Webhook created');
-
-      if (!globalOpts.json && isInteractive()) {
-        const d = data!;
-        console.log(`\nWebhook created`);
-        console.log(`ID:             ${d.id}`);
-        console.log(`Signing Secret: ${d.signing_secret}`);
-        console.log(`\nSave the signing secret — it is only shown once.`);
-      } else {
-        outputResult(data!, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to create webhook');
-      outputError({ message: errorMessage(err, 'Unknown error'), code: 'create_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      console.log(`\nWebhook created`);
+      console.log(`ID:             ${d.id}`);
+      console.log(`Signing Secret: ${d.signing_secret}`);
+      console.log(`\nSave the signing secret — it is only shown once.`);
+    } else {
+      outputResult(d, { json: globalOpts.json });
     }
   });

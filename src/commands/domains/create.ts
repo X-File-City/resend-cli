@@ -3,8 +3,8 @@ import * as p from '@clack/prompts';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { cancelAndExit } from '../../lib/prompts';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputError, outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 import { renderDnsRecordsTable } from './utils';
@@ -63,10 +63,9 @@ export const createDomainCommand = new Command('create')
       name = result;
     }
 
-    const spinner = createSpinner('Creating domain...');
-
-    try {
-      const { data, error } = await resend.domains.create({
+    const d = await withSpinner(
+      { loading: 'Creating domain...', success: 'Domain created', fail: 'Failed to create domain' },
+      () => resend.domains.create({
         name,
         ...(opts.region && { region: opts.region }),
         ...(opts.tls && { tls: opts.tls }),
@@ -76,29 +75,17 @@ export const createDomainCommand = new Command('create')
             ...(opts.receiving && { receiving: 'enabled' as const }),
           },
         }),
-      });
+      }),
+      'create_error',
+      globalOpts,
+    );
 
-      if (error) {
-        spinner.fail('Failed to create domain');
-        outputError({ message: error.message, code: 'create_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Domain created');
-
-      const d = data!;
-      if (!globalOpts.json && isInteractive()) {
-        console.log(`\nDomain created: ${d.name} (id: ${d.id})`);
-        console.log('\nDNS Records to configure:');
-        console.log(renderDnsRecordsTable(d.records, d.name));
-        console.log(`\nRun \`resend domains verify ${d.id}\` after configuring DNS.`);
-      } else {
-        outputResult(d, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to create domain');
-      outputError(
-        { message: errorMessage(err, 'Unknown error'), code: 'create_error' },
-        { json: globalOpts.json }
-      );
+    if (!globalOpts.json && isInteractive()) {
+      console.log(`\nDomain created: ${d.name} (id: ${d.id})`);
+      console.log('\nDNS Records to configure:');
+      console.log(renderDnsRecordsTable(d.records, d.name));
+      console.log(`\nRun \`resend domains verify ${d.id}\` after configuring DNS.`);
+    } else {
+      outputResult(d, { json: globalOpts.json });
     }
   });

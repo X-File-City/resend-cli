@@ -2,8 +2,8 @@ import { Command, Option } from '@commander-js/extra-typings';
 import type { WebhookEvent } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputError, outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 import { ALL_WEBHOOK_EVENTS } from './utils';
@@ -54,29 +54,20 @@ Use "all" as a shorthand for all 17 event types.
       ? ALL_WEBHOOK_EVENTS
       : (opts.events as WebhookEvent[] | undefined);
 
-    const spinner = createSpinner('Updating webhook...');
-
-    try {
-      const { data, error } = await resend.webhooks.update(id, {
+    const data = await withSpinner(
+      { loading: 'Updating webhook...', success: 'Webhook updated', fail: 'Failed to update webhook' },
+      () => resend.webhooks.update(id, {
         ...(opts.endpoint && { endpoint: opts.endpoint }),
         ...(selectedEvents?.length && { events: selectedEvents }),
         ...(opts.status && { status: opts.status }),
-      });
+      }),
+      'update_error',
+      globalOpts,
+    );
 
-      if (error) {
-        spinner.fail('Failed to update webhook');
-        outputError({ message: error.message, code: 'update_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Webhook updated');
-
-      if (!globalOpts.json && isInteractive()) {
-        console.log(`Webhook updated: ${id}`);
-      } else {
-        outputResult(data!, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to update webhook');
-      outputError({ message: errorMessage(err, 'Unknown error'), code: 'update_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      console.log(`Webhook updated: ${id}`);
+    } else {
+      outputResult(data, { json: globalOpts.json });
     }
   });

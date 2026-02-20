@@ -13,12 +13,12 @@ import { buildHelpText } from '../lib/help-text';
 
 type CheckStatus = 'pass' | 'warn' | 'fail';
 
-interface CheckResult {
+type CheckResult = {
   name: string;
   status: CheckStatus;
   message: string;
   detail?: string;
-}
+};
 
 const statusIcons: Record<CheckStatus, string> = {
   pass: '\x1B[32m✔\x1B[0m',

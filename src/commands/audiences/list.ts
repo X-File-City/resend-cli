@@ -1,8 +1,8 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 import { renderSegmentsTable } from '../segments/utils';
@@ -31,26 +31,16 @@ export const listAudiencesCommand = new Command('list')
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const resend = requireClient(globalOpts);
 
-    const spinner = createSpinner('Fetching audiences...');
+    const list = await withSpinner(
+      { loading: 'Fetching audiences...', success: 'Audiences fetched', fail: 'Failed to list audiences' },
+      () => resend.audiences.list(),
+      'list_error',
+      globalOpts,
+    );
 
-    try {
-      const { data, error } = await resend.audiences.list();
-
-      if (error) {
-        spinner.fail('Failed to list audiences');
-        outputError({ message: error.message, code: 'list_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Audiences fetched');
-
-      const list = data!;
-      if (!globalOpts.json && isInteractive()) {
-        console.log(renderSegmentsTable(list.data));
-      } else {
-        outputResult({ deprecated: true, deprecation_message: DEPRECATION_MSG, data: list }, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to list audiences');
-      outputError({ message: errorMessage(err, 'Unknown error'), code: 'list_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      console.log(renderSegmentsTable(list.data));
+    } else {
+      outputResult({ deprecated: true, deprecation_message: DEPRECATION_MSG, data: list }, { json: globalOpts.json });
     }
   });

@@ -3,8 +3,8 @@ import type { Resend } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { promptForMissing, cancelAndExit } from '../../lib/prompts';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputError, outputResult } from '../../lib/output';
 import { readFile } from '../../lib/files';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
@@ -138,10 +138,9 @@ export const sendCommand = new Command('send')
 
     const toAddresses = opts.to ?? [filled.to!];
 
-    const spinner = createSpinner('Sending email...');
-
-    try {
-      const { data, error } = await resend.emails.send({
+    const data = await withSpinner(
+      { loading: 'Sending email...', success: 'Email sent', fail: 'Failed to send email' },
+      () => resend.emails.send({
         from: filled.from!,
         to: toAddresses,
         subject: filled.subject!,
@@ -149,23 +148,9 @@ export const sendCommand = new Command('send')
         ...(opts.cc && { cc: opts.cc }),
         ...(opts.bcc && { bcc: opts.bcc }),
         ...(opts.replyTo && { replyTo: opts.replyTo }),
-      });
-
-      if (error) {
-        spinner.fail('Failed to send email');
-        outputError(
-          { message: error.message, code: 'send_error' },
-          { json: globalOpts.json }
-        );
-      }
-
-      spinner.stop('Email sent');
-      outputResult(data!, { json: globalOpts.json });
-    } catch (err) {
-      spinner.fail('Failed to send email');
-      outputError(
-        { message: errorMessage(err, 'Unknown error'), code: 'send_error' },
-        { json: globalOpts.json }
-      );
-    }
+      }),
+      'send_error',
+      globalOpts,
+    );
+    outputResult(data, { json: globalOpts.json });
   });

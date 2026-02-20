@@ -1,5 +1,37 @@
 import spinners from 'unicode-animations';
 import { isInteractive } from './tty';
+import type { GlobalOpts } from './client';
+import { errorMessage, outputError } from './output';
+
+type SdkResponse<T> = { data: T | null; error: { message: string } | null };
+
+/**
+ * Wraps an SDK call with a spinner, unified error handling, and automatic stop/fail.
+ * Eliminates the repeated try/catch + spinner boilerplate across all command files.
+ */
+export async function withSpinner<T>(
+  messages: { loading: string; success: string; fail: string },
+  call: () => Promise<SdkResponse<T>>,
+  errorCode: string,
+  globalOpts: GlobalOpts,
+): Promise<T> {
+  const spinner = createSpinner(messages.loading);
+  try {
+    const { data, error } = await call();
+    if (error) {
+      spinner.fail(messages.fail);
+      outputError({ message: error.message, code: errorCode }, { json: globalOpts.json });
+    }
+    spinner.stop(messages.success);
+    return data!;
+  } catch (err) {
+    spinner.fail(messages.fail);
+    return outputError(
+      { message: errorMessage(err, 'Unknown error'), code: errorCode },
+      { json: globalOpts.json },
+    );
+  }
+}
 
 export type SpinnerName = keyof typeof spinners;
 

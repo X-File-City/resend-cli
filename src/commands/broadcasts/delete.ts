@@ -2,8 +2,8 @@ import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { confirmDelete } from '../../lib/prompts';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 
@@ -34,28 +34,16 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
       await confirmDelete(id, `Delete broadcast ${id}? If scheduled, delivery will be cancelled.`, globalOpts);
     }
 
-    const spinner = createSpinner('Deleting broadcast...');
+    await withSpinner(
+      { loading: 'Deleting broadcast...', success: 'Broadcast deleted', fail: 'Failed to delete broadcast' },
+      () => resend.broadcasts.remove(id),
+      'delete_error',
+      globalOpts,
+    );
 
-    try {
-      const { error } = await resend.broadcasts.remove(id);
-
-      if (error) {
-        spinner.fail('Failed to delete broadcast');
-        outputError({ message: error.message, code: 'delete_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Broadcast deleted');
-
-      if (!globalOpts.json && isInteractive()) {
-        console.log('Broadcast deleted.');
-      } else {
-        outputResult({ object: 'broadcast', id, deleted: true }, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to delete broadcast');
-      outputError(
-        { message: errorMessage(err, 'Unknown error'), code: 'delete_error' },
-        { json: globalOpts.json }
-      );
+    if (!globalOpts.json && isInteractive()) {
+      console.log('Broadcast deleted.');
+    } else {
+      outputResult({ object: 'broadcast', id, deleted: true }, { json: globalOpts.json });
     }
   });

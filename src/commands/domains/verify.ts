@@ -1,8 +1,8 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 
@@ -27,28 +27,16 @@ Poll the status with: resend domains get <id>`,
 
     const resend = requireClient(globalOpts);
 
-    const spinner = createSpinner('Verifying domain...');
+    const data = await withSpinner(
+      { loading: 'Verifying domain...', success: 'Verification started', fail: 'Failed to verify domain' },
+      () => resend.domains.verify(id),
+      'verify_error',
+      globalOpts,
+    );
 
-    try {
-      const { data, error } = await resend.domains.verify(id);
-
-      if (error) {
-        spinner.fail('Failed to verify domain');
-        outputError({ message: error.message, code: 'verify_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Verification started');
-
-      if (!globalOpts.json && isInteractive()) {
-        console.log(`Domain verification started. Check status with resend domains get ${id}.`);
-      } else {
-        outputResult(data!, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to verify domain');
-      outputError(
-        { message: errorMessage(err, 'Unknown error'), code: 'verify_error' },
-        { json: globalOpts.json }
-      );
+    if (!globalOpts.json && isInteractive()) {
+      console.log(`Domain verification started. Check status with resend domains get ${id}.`);
+    } else {
+      outputResult(data, { json: globalOpts.json });
     }
   });

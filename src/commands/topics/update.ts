@@ -1,8 +1,8 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputError, outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 
@@ -37,29 +37,20 @@ To change the default subscription, delete the topic and recreate it.`,
       );
     }
 
-    const spinner = createSpinner('Updating topic...');
-
-    try {
-      const { data, error } = await resend.topics.update({
+    const data = await withSpinner(
+      { loading: 'Updating topic...', success: 'Topic updated', fail: 'Failed to update topic' },
+      () => resend.topics.update({
         id,
         ...(opts.name && { name: opts.name }),
         ...(opts.description && { description: opts.description }),
-      });
+      }),
+      'update_error',
+      globalOpts,
+    );
 
-      if (error) {
-        spinner.fail('Failed to update topic');
-        outputError({ message: error.message, code: 'update_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Topic updated');
-
-      if (!globalOpts.json && isInteractive()) {
-        console.log(`Topic updated: ${id}`);
-      } else {
-        outputResult(data!, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to update topic');
-      outputError({ message: errorMessage(err, 'Unknown error'), code: 'update_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      console.log(`Topic updated: ${id}`);
+    } else {
+      outputResult(data, { json: globalOpts.json });
     }
   });

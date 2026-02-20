@@ -3,8 +3,8 @@ import * as p from '@clack/prompts';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { cancelAndExit } from '../../lib/prompts';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputError, outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 
@@ -73,37 +73,24 @@ Permissions:
       permission = permissionResult;
     }
 
-    const spinner = createSpinner('Creating API key...');
-
-    try {
-      const { data, error } = await resend.apiKeys.create({
+    const d = await withSpinner(
+      { loading: 'Creating API key...', success: 'API key created', fail: 'Failed to create API key' },
+      () => resend.apiKeys.create({
         name,
         ...(permission && { permission }),
         ...(opts.domainId && { domain_id: opts.domainId }),
-      });
+      }),
+      'create_error',
+      globalOpts,
+    );
 
-      if (error) {
-        spinner.fail('Failed to create API key');
-        outputError({ message: error.message, code: 'create_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('API key created');
-
-      const d = data!;
-      if (!globalOpts.json && isInteractive()) {
-        console.log('\nAPI key created!\n');
-        console.log(`  Name:    ${name}`);
-        console.log(`  ID:      ${d.id}`);
-        console.log(`  Token:   ${d.token}`);
-        console.log('\n⚠  Store this token now — it cannot be retrieved again.');
-      } else {
-        outputResult(d, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to create API key');
-      outputError(
-        { message: errorMessage(err, 'Unknown error'), code: 'create_error' },
-        { json: globalOpts.json }
-      );
+    if (!globalOpts.json && isInteractive()) {
+      console.log('\nAPI key created!\n');
+      console.log(`  Name:    ${name}`);
+      console.log(`  ID:      ${d.id}`);
+      console.log(`  Token:   ${d.token}`);
+      console.log('\n⚠  Store this token now — it cannot be retrieved again.');
+    } else {
+      outputResult(d, { json: globalOpts.json });
     }
   });

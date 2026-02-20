@@ -2,8 +2,8 @@ import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { confirmDelete } from '../../lib/prompts';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 
@@ -39,25 +39,16 @@ Non-interactive: --yes is required to confirm deletion when stdin/stdout is not 
       );
     }
 
-    const spinner = createSpinner('Deleting contact property...');
+    await withSpinner(
+      { loading: 'Deleting contact property...', success: 'Contact property deleted', fail: 'Failed to delete contact property' },
+      () => resend.contactProperties.remove(id),
+      'delete_error',
+      globalOpts,
+    );
 
-    try {
-      const { error } = await resend.contactProperties.remove(id);
-
-      if (error) {
-        spinner.fail('Failed to delete contact property');
-        outputError({ message: error.message, code: 'delete_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Contact property deleted');
-
-      if (!globalOpts.json && isInteractive()) {
-        console.log('Contact property deleted.');
-      } else {
-        outputResult({ object: 'contact_property', id, deleted: true }, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to delete contact property');
-      outputError({ message: errorMessage(err, 'Unknown error'), code: 'delete_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      console.log('Contact property deleted.');
+    } else {
+      outputResult({ object: 'contact_property', id, deleted: true }, { json: globalOpts.json });
     }
   });

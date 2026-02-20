@@ -3,8 +3,8 @@ import * as p from '@clack/prompts';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { cancelAndExit } from '../../lib/prompts';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputError, outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 
@@ -58,30 +58,20 @@ Non-interactive: --name is required.`,
       name = result;
     }
 
-    const spinner = createSpinner('Creating topic...');
-
-    try {
-      const { data, error } = await resend.topics.create({
+    const data = await withSpinner(
+      { loading: 'Creating topic...', success: 'Topic created', fail: 'Failed to create topic' },
+      () => resend.topics.create({
         name: name!,
         defaultSubscription: opts.defaultSubscription,
         ...(opts.description && { description: opts.description }),
-      });
+      }),
+      'create_error',
+      globalOpts,
+    );
 
-      if (error) {
-        spinner.fail('Failed to create topic');
-        outputError({ message: error.message, code: 'create_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Topic created');
-
-      if (!globalOpts.json && isInteractive()) {
-        const d = data!;
-        console.log(`\nTopic created: ${d.id}`);
-      } else {
-        outputResult(data!, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to create topic');
-      outputError({ message: errorMessage(err, 'Unknown error'), code: 'create_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      console.log(`\nTopic created: ${data.id}`);
+    } else {
+      outputResult(data, { json: globalOpts.json });
     }
   });

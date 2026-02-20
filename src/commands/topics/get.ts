@@ -1,8 +1,8 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 
@@ -24,30 +24,20 @@ export const getTopicCommand = new Command('get')
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const resend = requireClient(globalOpts);
 
-    const spinner = createSpinner('Fetching topic...');
+    const data = await withSpinner(
+      { loading: 'Fetching topic...', success: 'Topic fetched', fail: 'Failed to fetch topic' },
+      () => resend.topics.get(id),
+      'fetch_error',
+      globalOpts,
+    );
 
-    try {
-      const { data, error } = await resend.topics.get(id);
-
-      if (error) {
-        spinner.fail('Failed to fetch topic');
-        outputError({ message: error.message, code: 'fetch_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Topic fetched');
-
-      if (!globalOpts.json && isInteractive()) {
-        const d = data!;
-        console.log(`\n${d.name}`);
-        console.log(`ID: ${d.id}`);
-        if (d.description) console.log(`Description: ${d.description}`);
-        console.log(`Default subscription: ${d.default_subscription}`);
-        console.log(`Created: ${d.created_at}`);
-      } else {
-        outputResult(data!, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to fetch topic');
-      outputError({ message: errorMessage(err, 'Unknown error'), code: 'fetch_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      console.log(`\n${data.name}`);
+      console.log(`ID: ${data.id}`);
+      if (data.description) console.log(`Description: ${data.description}`);
+      console.log(`Default subscription: ${data.default_subscription}`);
+      console.log(`Created: ${data.created_at}`);
+    } else {
+      outputResult(data, { json: globalOpts.json });
     }
   });

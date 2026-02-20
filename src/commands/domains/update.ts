@@ -2,8 +2,8 @@ import { Command, Option } from '@commander-js/extra-typings';
 import type { UpdateDomainsOptions } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputError, outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 
@@ -51,27 +51,16 @@ export const updateDomainCommand = new Command('update')
     if (openTracking !== undefined) payload.openTracking = openTracking;
     if (clickTracking !== undefined) payload.clickTracking = clickTracking;
 
-    const spinner = createSpinner('Updating domain...');
+    const data = await withSpinner(
+      { loading: 'Updating domain...', success: 'Domain updated', fail: 'Failed to update domain' },
+      () => resend.domains.update(payload),
+      'update_error',
+      globalOpts,
+    );
 
-    try {
-      const { data, error } = await resend.domains.update(payload);
-
-      if (error) {
-        spinner.fail('Failed to update domain');
-        outputError({ message: error.message, code: 'update_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Domain updated');
-      if (!globalOpts.json && isInteractive()) {
-        console.log(`Domain updated: ${id}`);
-      } else {
-        outputResult(data!, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to update domain');
-      outputError(
-        { message: errorMessage(err, 'Unknown error'), code: 'update_error' },
-        { json: globalOpts.json }
-      );
+    if (!globalOpts.json && isInteractive()) {
+      console.log(`Domain updated: ${id}`);
+    } else {
+      outputResult(data, { json: globalOpts.json });
     }
   });

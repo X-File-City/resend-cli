@@ -3,8 +3,8 @@ import type { CreateBatchOptions } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { cancelAndExit } from '../../lib/prompts';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputError, outputResult } from '../../lib/output';
 import { readFile } from '../../lib/files';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
@@ -94,38 +94,23 @@ export const batchCommand = new Command('batch')
       }
     }
 
-    const spinner = createSpinner('Sending batch...');
-
-    try {
-      const { data, error } = await resend.batch.send(
+    const batchData = await withSpinner(
+      { loading: 'Sending batch...', success: 'Batch sent', fail: 'Failed to send batch' },
+      () => resend.batch.send(
         emails as CreateBatchOptions,
         opts.idempotencyKey ? { idempotencyKey: opts.idempotencyKey } : undefined
-      );
+      ),
+      'batch_error',
+      globalOpts,
+    );
 
-      if (error) {
-        spinner.fail('Failed to send batch');
-        outputError(
-          { message: error.message, code: 'batch_error' },
-          { json: globalOpts.json }
-        );
+    const emailIds = batchData.data;
+    if (!globalOpts.json && isInteractive()) {
+      console.log(`Sent ${emailIds.length} email${emailIds.length === 1 ? '' : 's'}`);
+      for (const email of emailIds) {
+        console.log(`  ${email.id}`);
       }
-
-      spinner.stop('Batch sent');
-
-      const emailIds = data!.data;
-      if (!globalOpts.json && isInteractive()) {
-        console.log(`Sent ${emailIds.length} email${emailIds.length === 1 ? '' : 's'}`);
-        for (const email of emailIds) {
-          console.log(`  ${email.id}`);
-        }
-      } else {
-        outputResult(emailIds, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to send batch');
-      outputError(
-        { message: errorMessage(err, 'Unknown error'), code: 'batch_error' },
-        { json: globalOpts.json }
-      );
+    } else {
+      outputResult(emailIds, { json: globalOpts.json });
     }
   });

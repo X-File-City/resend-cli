@@ -1,8 +1,8 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputError, outputResult } from '../../lib/output';
 import { readFile } from '../../lib/files';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
@@ -51,34 +51,22 @@ Variable interpolation:
       html = readFile(opts.htmlFile, globalOpts);
     }
 
-    const spinner = createSpinner('Updating broadcast...');
-
-    try {
-      const { data, error } = await resend.broadcasts.update(id, {
+    const data = await withSpinner(
+      { loading: 'Updating broadcast...', success: 'Broadcast updated', fail: 'Failed to update broadcast' },
+      () => resend.broadcasts.update(id, {
         ...(opts.from && { from: opts.from }),
         ...(opts.subject && { subject: opts.subject }),
         ...(html && { html }),
         ...(opts.text && { text: opts.text }),
         ...(opts.name && { name: opts.name }),
-      });
+      }),
+      'update_error',
+      globalOpts,
+    );
 
-      if (error) {
-        spinner.fail('Failed to update broadcast');
-        outputError({ message: error.message, code: 'update_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Broadcast updated');
-
-      if (!globalOpts.json && isInteractive()) {
-        console.log(`\nBroadcast updated: ${data!.id}`);
-      } else {
-        outputResult(data!, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to update broadcast');
-      outputError(
-        { message: errorMessage(err, 'Unknown error'), code: 'update_error' },
-        { json: globalOpts.json }
-      );
+    if (!globalOpts.json && isInteractive()) {
+      console.log(`\nBroadcast updated: ${data.id}`);
+    } else {
+      outputResult(data, { json: globalOpts.json });
     }
   });

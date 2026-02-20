@@ -4,8 +4,8 @@ import type { CreateContactPropertyOptions } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { cancelAndExit } from '../../lib/prompts';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputError, outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 
@@ -87,31 +87,22 @@ built-in contact fields and may cause unexpected behavior in broadcasts.`,
       }
     }
 
-    const spinner = createSpinner('Creating contact property...');
+    const payload = {
+      key: key!,
+      type: type!,
+      ...(fallbackValue !== undefined && { fallbackValue }),
+    } as CreateContactPropertyOptions;
 
-    try {
-      const payload = {
-        key: key!,
-        type: type!,
-        ...(fallbackValue !== undefined && { fallbackValue }),
-      } as CreateContactPropertyOptions;
+    const data = await withSpinner(
+      { loading: 'Creating contact property...', success: 'Contact property created', fail: 'Failed to create contact property' },
+      () => resend.contactProperties.create(payload),
+      'create_error',
+      globalOpts,
+    );
 
-      const { data, error } = await resend.contactProperties.create(payload);
-
-      if (error) {
-        spinner.fail('Failed to create contact property');
-        outputError({ message: error.message, code: 'create_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Contact property created');
-
-      if (!globalOpts.json && isInteractive()) {
-        console.log(`\nContact property created: ${data!.id}`);
-      } else {
-        outputResult(data!, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to create contact property');
-      outputError({ message: errorMessage(err, 'Unknown error'), code: 'create_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      console.log(`\nContact property created: ${data.id}`);
+    } else {
+      outputResult(data, { json: globalOpts.json });
     }
   });

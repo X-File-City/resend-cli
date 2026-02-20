@@ -1,8 +1,8 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputError, outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 
@@ -50,29 +50,21 @@ The fallback value is used in broadcast template interpolation when a contact ha
       );
     }
 
-    const spinner = createSpinner('Updating contact property...');
+    const fallbackValue = opts.clearFallbackValue ? null : opts.fallbackValue;
 
-    try {
-      const fallbackValue = opts.clearFallbackValue ? null : opts.fallbackValue;
-
-      const { data, error } = await resend.contactProperties.update({
+    const data = await withSpinner(
+      { loading: 'Updating contact property...', success: 'Contact property updated', fail: 'Failed to update contact property' },
+      () => resend.contactProperties.update({
         id,
         ...(fallbackValue !== undefined && { fallbackValue }),
-      });
+      }),
+      'update_error',
+      globalOpts,
+    );
 
-      if (error) {
-        spinner.fail('Failed to update contact property');
-        outputError({ message: error.message, code: 'update_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Contact property updated');
-      if (!globalOpts.json && isInteractive()) {
-        console.log(`Contact property updated: ${id}`);
-      } else {
-        outputResult(data!, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to update contact property');
-      outputError({ message: errorMessage(err, 'Unknown error'), code: 'update_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      console.log(`Contact property updated: ${id}`);
+    } else {
+      outputResult(data, { json: globalOpts.json });
     }
   });

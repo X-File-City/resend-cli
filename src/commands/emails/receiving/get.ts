@@ -1,8 +1,8 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../../lib/client';
 import { requireClient } from '../../../lib/client';
-import { createSpinner } from '../../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../../lib/output';
+import { withSpinner } from '../../../lib/spinner';
+import { outputResult } from '../../../lib/output';
 import { isInteractive } from '../../../lib/tty';
 import { buildHelpText } from '../../../lib/help-text';
 
@@ -27,38 +27,29 @@ export const getReceivingCommand = new Command('get')
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const resend = requireClient(globalOpts);
 
-    const spinner = createSpinner('Fetching received email...');
+    const data = await withSpinner(
+      { loading: 'Fetching received email...', success: 'Received email fetched', fail: 'Failed to fetch received email' },
+      () => resend.emails.receiving.get(id),
+      'fetch_error',
+      globalOpts,
+    );
 
-    try {
-      const { data, error } = await resend.emails.receiving.get(id);
-
-      if (error) {
-        spinner.fail('Failed to fetch received email');
-        outputError({ message: error.message, code: 'fetch_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      const d = data;
+      console.log(`\nFrom:    ${d.from}`);
+      console.log(`To:      ${d.to.join(', ')}`);
+      console.log(`Subject: ${d.subject}`);
+      console.log(`Date:    ${d.created_at}`);
+      if (d.attachments.length > 0) {
+        console.log(`Files:   ${d.attachments.length} attachment(s)`);
       }
-
-      spinner.stop('Received email fetched');
-
-      if (!globalOpts.json && isInteractive()) {
-        const d = data!;
-        console.log(`\nFrom:    ${d.from}`);
-        console.log(`To:      ${d.to.join(', ')}`);
-        console.log(`Subject: ${d.subject}`);
-        console.log(`Date:    ${d.created_at}`);
-        if (d.attachments.length > 0) {
-          console.log(`Files:   ${d.attachments.length} attachment(s)`);
-        }
-        if (d.text) {
-          const snippet = d.text.length > 200 ? `${d.text.slice(0, 197)}...` : d.text;
-          console.log(`\n${snippet}`);
-        } else if (d.html) {
-          console.log('\n(HTML body only — use --json to view or pipe to a browser)');
-        }
-      } else {
-        outputResult(data!, { json: globalOpts.json });
+      if (d.text) {
+        const snippet = d.text.length > 200 ? `${d.text.slice(0, 197)}...` : d.text;
+        console.log(`\n${snippet}`);
+      } else if (d.html) {
+        console.log('\n(HTML body only — use --json to view or pipe to a browser)');
       }
-    } catch (err) {
-      spinner.fail('Failed to fetch received email');
-      outputError({ message: errorMessage(err, 'Unknown error'), code: 'fetch_error' }, { json: globalOpts.json });
+    } else {
+      outputResult(data, { json: globalOpts.json });
     }
   });

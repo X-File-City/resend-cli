@@ -1,8 +1,8 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputResult } from '../../lib/output';
 import { parseLimitOpt, buildPaginationOpts, printPaginationHint } from '../../lib/pagination';
 import { isInteractive } from '../../lib/tty';
 import { renderBroadcastsTable } from './utils';
@@ -35,30 +35,17 @@ To retrieve full details (html, from, subject), use: resend broadcasts get <id>`
     const limit = parseLimitOpt(opts.limit, globalOpts);
     const paginationOpts = buildPaginationOpts(limit, opts.after, opts.before);
 
-    const spinner = createSpinner('Fetching broadcasts...');
+    const list = await withSpinner(
+      { loading: 'Fetching broadcasts...', success: 'Broadcasts fetched', fail: 'Failed to list broadcasts' },
+      () => resend.broadcasts.list(paginationOpts),
+      'list_error',
+      globalOpts,
+    );
 
-    try {
-      const { data, error } = await resend.broadcasts.list(paginationOpts);
-
-      if (error) {
-        spinner.fail('Failed to list broadcasts');
-        outputError({ message: error.message, code: 'list_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Broadcasts fetched');
-
-      const list = data!;
-      if (!globalOpts.json && isInteractive()) {
-        console.log(renderBroadcastsTable(list.data));
-        printPaginationHint(list);
-      } else {
-        outputResult(list, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to list broadcasts');
-      outputError(
-        { message: errorMessage(err, 'Unknown error'), code: 'list_error' },
-        { json: globalOpts.json }
-      );
+    if (!globalOpts.json && isInteractive()) {
+      console.log(renderBroadcastsTable(list.data));
+      printPaginationHint(list);
+    } else {
+      outputResult(list, { json: globalOpts.json });
     }
   });

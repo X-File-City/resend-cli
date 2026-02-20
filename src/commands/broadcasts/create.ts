@@ -4,8 +4,8 @@ import * as p from '@clack/prompts';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { cancelAndExit } from '../../lib/prompts';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputError, outputResult } from '../../lib/output';
 import { readFile } from '../../lib/files';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
@@ -102,10 +102,13 @@ Scheduling:
       text = result;
     }
 
-    const spinner = createSpinner('Creating broadcast...');
-
-    try {
-      const { data, error } = await resend.broadcasts.create({
+    const data = await withSpinner(
+      {
+        loading: 'Creating broadcast...',
+        success: opts.send ? 'Broadcast sent' : 'Broadcast created',
+        fail: 'Failed to create broadcast',
+      },
+      () => resend.broadcasts.create({
         from,
         subject,
         segmentId,
@@ -117,32 +120,21 @@ Scheduling:
         ...(opts.topicId && { topicId: opts.topicId }),
         ...(opts.send && { send: true as const }),
         ...(opts.send && opts.scheduledAt && { scheduledAt: opts.scheduledAt }),
-      } as CreateBroadcastOptions);
+      } as CreateBroadcastOptions),
+      'create_error',
+      globalOpts,
+    );
 
-      if (error) {
-        spinner.fail('Failed to create broadcast');
-        outputError({ message: error.message, code: 'create_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop(opts.send ? 'Broadcast sent' : 'Broadcast created');
-
-      if (!globalOpts.json && isInteractive()) {
-        const d = data!;
-        if (opts.send) {
-          console.log(`\nBroadcast sent: ${d.id}`);
-        } else {
-          console.log(`\nBroadcast created: ${d.id}`);
-          console.log('Status: draft');
-          console.log(`\nSend it with: resend broadcasts send ${d.id}`);
-        }
+    if (!globalOpts.json && isInteractive()) {
+      const d = data;
+      if (opts.send) {
+        console.log(`\nBroadcast sent: ${d.id}`);
       } else {
-        outputResult(data!, { json: globalOpts.json });
+        console.log(`\nBroadcast created: ${d.id}`);
+        console.log('Status: draft');
+        console.log(`\nSend it with: resend broadcasts send ${d.id}`);
       }
-    } catch (err) {
-      spinner.fail('Failed to create broadcast');
-      outputError(
-        { message: errorMessage(err, 'Unknown error'), code: 'create_error' },
-        { json: globalOpts.json }
-      );
+    } else {
+      outputResult(data, { json: globalOpts.json });
     }
   });

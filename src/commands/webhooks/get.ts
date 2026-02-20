@@ -1,8 +1,8 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 
@@ -26,30 +26,20 @@ To rotate secrets, delete the webhook and recreate it.`,
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const resend = requireClient(globalOpts);
 
-    const spinner = createSpinner('Fetching webhook...');
+    const d = await withSpinner(
+      { loading: 'Fetching webhook...', success: 'Webhook fetched', fail: 'Failed to fetch webhook' },
+      () => resend.webhooks.get(id),
+      'fetch_error',
+      globalOpts,
+    );
 
-    try {
-      const { data, error } = await resend.webhooks.get(id);
-
-      if (error) {
-        spinner.fail('Failed to fetch webhook');
-        outputError({ message: error.message, code: 'fetch_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Webhook fetched');
-
-      if (!globalOpts.json && isInteractive()) {
-        const d = data!;
-        console.log(`\n${d.endpoint}`);
-        console.log(`ID:      ${d.id}`);
-        console.log(`Status:  ${d.status}`);
-        console.log(`Events:  ${(d.events ?? []).join(', ') || '(none)'}`);
-        console.log(`Created: ${d.created_at}`);
-      } else {
-        outputResult(data!, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to fetch webhook');
-      outputError({ message: errorMessage(err, 'Unknown error'), code: 'fetch_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      console.log(`\n${d.endpoint}`);
+      console.log(`ID:      ${d.id}`);
+      console.log(`Status:  ${d.status}`);
+      console.log(`Events:  ${(d.events ?? []).join(', ') || '(none)'}`);
+      console.log(`Created: ${d.created_at}`);
+    } else {
+      outputResult(d, { json: globalOpts.json });
     }
   });

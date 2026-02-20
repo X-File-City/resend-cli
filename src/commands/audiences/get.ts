@@ -1,8 +1,8 @@
 import { Command } from '@commander-js/extra-typings';
 import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
-import { createSpinner } from '../../lib/spinner';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
+import { withSpinner } from '../../lib/spinner';
+import { outputResult } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
 import { DEPRECATION_MSG, MIGRATION_URL } from './utils';
@@ -31,28 +31,19 @@ export const getAudienceCommand = new Command('get')
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const resend = requireClient(globalOpts);
 
-    const spinner = createSpinner('Fetching audience...');
+    const data = await withSpinner(
+      { loading: 'Fetching audience...', success: 'Audience fetched', fail: 'Failed to fetch audience' },
+      () => resend.audiences.get(id),
+      'fetch_error',
+      globalOpts,
+    );
 
-    try {
-      const { data, error } = await resend.audiences.get(id);
-
-      if (error) {
-        spinner.fail('Failed to fetch audience');
-        outputError({ message: error.message, code: 'fetch_error' }, { json: globalOpts.json });
-      }
-
-      spinner.stop('Audience fetched');
-
-      if (!globalOpts.json && isInteractive()) {
-        const d = data!;
-        console.log(`\n${d.name}`);
-        console.log(`ID: ${d.id}`);
-        console.log(`Created: ${d.created_at}`);
-      } else {
-        outputResult({ deprecated: true, deprecation_message: DEPRECATION_MSG, data }, { json: globalOpts.json });
-      }
-    } catch (err) {
-      spinner.fail('Failed to fetch audience');
-      outputError({ message: errorMessage(err, 'Unknown error'), code: 'fetch_error' }, { json: globalOpts.json });
+    if (!globalOpts.json && isInteractive()) {
+      const d = data;
+      console.log(`\n${d.name}`);
+      console.log(`ID: ${d.id}`);
+      console.log(`Created: ${d.created_at}`);
+    } else {
+      outputResult({ deprecated: true, deprecation_message: DEPRECATION_MSG, data }, { json: globalOpts.json });
     }
   });
