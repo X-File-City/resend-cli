@@ -5,6 +5,7 @@ import { requireClient } from '../../lib/client';
 import { createSpinner } from '../../lib/spinner';
 import { outputError, outputResult, errorMessage } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
+import { buildHelpText } from '../../lib/help-text';
 import { contactIdentifier, parsePropertiesJson } from './utils';
 
 export const updateContactCommand = new Command('update')
@@ -15,8 +16,8 @@ export const updateContactCommand = new Command('update')
   .option('--properties <json>', "JSON object of properties to merge (e.g. '{\"company\":\"Acme\"}'); set a key to null to clear it")
   .addHelpText(
     'after',
-    `
-The <id> argument accepts either a UUID or an email address.
+    buildHelpText({
+      context: `The <id> argument accepts either a UUID or an email address.
 
 Subscription toggle:
   --unsubscribed   Sets unsubscribed: true  — contact will not receive any broadcasts.
@@ -24,24 +25,16 @@ Subscription toggle:
   Omitting both flags leaves the subscription status unchanged.
 
 Properties: --properties merges the given JSON object with existing properties.
-  Set a key to null to clear it: '{"company":null}'.
-
-Global options (defined on root):
-  --api-key <key>  API key (or set RESEND_API_KEY env var)
-  --json           Force JSON output (also auto-enabled when stdout is piped)
-
-Output (--json or piped):
-  {"object":"contact","id":"<id>"}
-
-Errors (exit code 1):
-  {"error":{"message":"<message>","code":"<code>"}}
-  Codes: auth_error | invalid_properties | update_error
-
-Examples:
-  $ resend contacts update 479e3145-dd38-4932-8c0c-e58b548c9e76 --unsubscribed
-  $ resend contacts update user@example.com --no-unsubscribed
-  $ resend contacts update 479e3145-dd38-4932-8c0c-e58b548c9e76 --properties '{"plan":"pro"}'
-  $ resend contacts update user@example.com --unsubscribed --json`
+  Set a key to null to clear it: '{"company":null}'.`,
+      output: `  {"object":"contact","id":"<id>"}`,
+      errorCodes: ['auth_error', 'invalid_properties', 'update_error'],
+      examples: [
+        'resend contacts update 479e3145-dd38-4932-8c0c-e58b548c9e76 --unsubscribed',
+        'resend contacts update user@example.com --no-unsubscribed',
+        `resend contacts update 479e3145-dd38-4932-8c0c-e58b548c9e76 --properties '{"plan":"pro"}'`,
+        'resend contacts update user@example.com --unsubscribed --json',
+      ],
+    }),
   )
   .action(async (id, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;

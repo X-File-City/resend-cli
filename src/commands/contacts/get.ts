@@ -4,37 +4,22 @@ import { requireClient } from '../../lib/client';
 import { createSpinner } from '../../lib/spinner';
 import { outputError, outputResult, errorMessage } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
+import { buildHelpText } from '../../lib/help-text';
 
 export const getContactCommand = new Command('get')
   .description('Retrieve a contact by ID or email address')
   .argument('<id>', 'Contact UUID or email address — both are accepted by the API')
   .addHelpText(
     'after',
-    `
-Global options (defined on root):
-  --api-key <key>  API key (or set RESEND_API_KEY env var)
-  --json           Force JSON output (also auto-enabled when stdout is piped)
-
-Output (--json or piped):
-  {
-    "object": "contact",
-    "id": "<uuid>",
-    "email": "user@example.com",
-    "first_name": "Jane",
-    "last_name": "Smith",
-    "created_at": "2026-01-01T00:00:00.000Z",
-    "unsubscribed": false,
-    "properties": {}
-  }
-
-Errors (exit code 1):
-  {"error":{"message":"<message>","code":"<code>"}}
-  Codes: auth_error | fetch_error
-
-Examples:
-  $ resend contacts get 479e3145-dd38-4932-8c0c-e58b548c9e76
-  $ resend contacts get user@example.com
-  $ resend contacts get 479e3145-dd38-4932-8c0c-e58b548c9e76 --json`
+    buildHelpText({
+      output: `  {\n    "object": "contact",\n    "id": "<uuid>",\n    "email": "user@example.com",\n    "first_name": "Jane",\n    "last_name": "Smith",\n    "created_at": "2026-01-01T00:00:00.000Z",\n    "unsubscribed": false,\n    "properties": {}\n  }`,
+      errorCodes: ['auth_error', 'fetch_error'],
+      examples: [
+        'resend contacts get 479e3145-dd38-4932-8c0c-e58b548c9e76',
+        'resend contacts get user@example.com',
+        'resend contacts get 479e3145-dd38-4932-8c0c-e58b548c9e76 --json',
+      ],
+    }),
   )
   .action(async (id, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;

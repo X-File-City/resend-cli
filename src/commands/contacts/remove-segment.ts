@@ -5,6 +5,7 @@ import { requireClient } from '../../lib/client';
 import { createSpinner } from '../../lib/spinner';
 import { outputError, outputResult, errorMessage } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
+import { buildHelpText } from '../../lib/help-text';
 import { segmentContactIdentifier } from './utils';
 
 export const removeContactSegmentCommand = new Command('remove-segment')
@@ -13,24 +14,16 @@ export const removeContactSegmentCommand = new Command('remove-segment')
   .argument('<segmentId>', 'Segment ID to remove the contact from')
   .addHelpText(
     'after',
-    `
-The <contactId> argument accepts either a UUID or an email address.
-The <segmentId> argument must be a segment UUID (not an email).
-
-Global options (defined on root):
-  --api-key <key>  API key (or set RESEND_API_KEY env var)
-  --json           Force JSON output (also auto-enabled when stdout is piped)
-
-Output (--json or piped):
-  {"id":"<segment-id>","deleted":true}
-
-Errors (exit code 1):
-  {"error":{"message":"<message>","code":"<code>"}}
-  Codes: auth_error | remove_segment_error
-
-Examples:
-  $ resend contacts remove-segment 479e3145-dd38-4932-8c0c-e58b548c9e76 seg_123
-  $ resend contacts remove-segment user@example.com seg_123 --json`
+    buildHelpText({
+      context: `The <contactId> argument accepts either a UUID or an email address.
+The <segmentId> argument must be a segment UUID (not an email).`,
+      output: `  {"id":"<segment-id>","deleted":true}`,
+      errorCodes: ['auth_error', 'remove_segment_error'],
+      examples: [
+        'resend contacts remove-segment 479e3145-dd38-4932-8c0c-e58b548c9e76 seg_123',
+        'resend contacts remove-segment user@example.com seg_123 --json',
+      ],
+    }),
   )
   .action(async (contactId, segmentId, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;

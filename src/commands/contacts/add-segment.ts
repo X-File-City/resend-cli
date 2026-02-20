@@ -7,6 +7,7 @@ import { cancelAndExit } from '../../lib/prompts';
 import { createSpinner } from '../../lib/spinner';
 import { outputError, outputResult, errorMessage } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
+import { buildHelpText } from '../../lib/help-text';
 import { segmentContactIdentifier } from './utils';
 
 export const addContactSegmentCommand = new Command('add-segment')
@@ -15,25 +16,17 @@ export const addContactSegmentCommand = new Command('add-segment')
   .option('--segment-id <id>', 'Segment ID to add the contact to (required)')
   .addHelpText(
     'after',
-    `
-The <contactId> argument accepts either a UUID or an email address.
+    buildHelpText({
+      context: `The <contactId> argument accepts either a UUID or an email address.
 
-Non-interactive: --segment-id is required.
-
-Global options (defined on root):
-  --api-key <key>  API key (or set RESEND_API_KEY env var)
-  --json           Force JSON output (also auto-enabled when stdout is piped)
-
-Output (--json or piped):
-  {"id":"<segment-membership-id>"}
-
-Errors (exit code 1):
-  {"error":{"message":"<message>","code":"<code>"}}
-  Codes: auth_error | missing_segment_id | add_segment_error
-
-Examples:
-  $ resend contacts add-segment 479e3145-dd38-4932-8c0c-e58b548c9e76 --segment-id seg_123
-  $ resend contacts add-segment user@example.com --segment-id seg_123 --json`
+Non-interactive: --segment-id is required.`,
+      output: `  {"id":"<segment-membership-id>"}`,
+      errorCodes: ['auth_error', 'missing_segment_id', 'add_segment_error'],
+      examples: [
+        'resend contacts add-segment 479e3145-dd38-4932-8c0c-e58b548c9e76 --segment-id seg_123',
+        'resend contacts add-segment user@example.com --segment-id seg_123 --json',
+      ],
+    }),
   )
   .action(async (contactId, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;

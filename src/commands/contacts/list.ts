@@ -5,6 +5,7 @@ import { createSpinner } from '../../lib/spinner';
 import { outputError, outputResult, errorMessage } from '../../lib/output';
 import { parseLimitOpt, buildPaginationOpts, printPaginationHint } from '../../lib/pagination';
 import { isInteractive } from '../../lib/tty';
+import { buildHelpText } from '../../lib/help-text';
 import { renderContactsTable } from './utils';
 
 export const listContactsCommand = new Command('list')
@@ -14,28 +15,20 @@ export const listContactsCommand = new Command('list')
   .option('--before <cursor>', 'Return contacts before this cursor (previous page)')
   .addHelpText(
     'after',
-    `
-Contacts are global — they are not scoped to audiences or segments since the 2025 migration.
+    buildHelpText({
+      context: `Contacts are global — they are not scoped to audiences or segments since the 2025 migration.
 
 Pagination: use --after or --before with a contact ID as the cursor.
   Only one of --after or --before may be used at a time.
-  The response includes has_more: true when additional pages exist.
-
-Global options (defined on root):
-  --api-key <key>  API key (or set RESEND_API_KEY env var)
-  --json           Force JSON output (also auto-enabled when stdout is piped)
-
-Output (--json or piped):
-  {"object":"list","data":[{"id":"...","email":"...","first_name":"...","last_name":"...","unsubscribed":false}],"has_more":false}
-
-Errors (exit code 1):
-  {"error":{"message":"<message>","code":"<code>"}}
-  Codes: auth_error | invalid_limit | list_error
-
-Examples:
-  $ resend contacts list
-  $ resend contacts list --limit 25 --json
-  $ resend contacts list --after 479e3145-dd38-4932-8c0c-e58b548c9e76 --json`
+  The response includes has_more: true when additional pages exist.`,
+      output: `  {"object":"list","data":[{"id":"...","email":"...","first_name":"...","last_name":"...","unsubscribed":false}],"has_more":false}`,
+      errorCodes: ['auth_error', 'invalid_limit', 'list_error'],
+      examples: [
+        'resend contacts list',
+        'resend contacts list --limit 25 --json',
+        'resend contacts list --after 479e3145-dd38-4932-8c0c-e58b548c9e76 --json',
+      ],
+    }),
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;

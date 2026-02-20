@@ -4,6 +4,7 @@ import { requireClient } from '../../lib/client';
 import { createSpinner } from '../../lib/spinner';
 import { outputError, outputResult, errorMessage } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
+import { buildHelpText } from '../../lib/help-text';
 import { renderContactTopicsTable, contactIdentifier } from './utils';
 
 export const listContactTopicsCommand = new Command('topics')
@@ -11,29 +12,21 @@ export const listContactTopicsCommand = new Command('topics')
   .argument('<id>', 'Contact UUID or email address')
   .addHelpText(
     'after',
-    `
-The <id> argument accepts either a UUID or an email address.
+    buildHelpText({
+      context: `The <id> argument accepts either a UUID or an email address.
 
 Topics control which broadcast email types a contact receives.
   subscription values: "opt_in" (receiving) | "opt_out" (not receiving)
 
-Use "resend contacts update-topics <id>" to change subscription statuses.
-
-Global options (defined on root):
-  --api-key <key>  API key (or set RESEND_API_KEY env var)
-  --json           Force JSON output (also auto-enabled when stdout is piped)
-
-Output (--json or piped):
-  {"object":"list","data":[{"id":"...","name":"Product Updates","description":"...","subscription":"opt_in"}],"has_more":false}
-
-Errors (exit code 1):
-  {"error":{"message":"<message>","code":"<code>"}}
-  Codes: auth_error | list_error
-
-Examples:
-  $ resend contacts topics 479e3145-dd38-4932-8c0c-e58b548c9e76
-  $ resend contacts topics user@example.com
-  $ resend contacts topics 479e3145-dd38-4932-8c0c-e58b548c9e76 --json`
+Use "resend contacts update-topics <id>" to change subscription statuses.`,
+      output: `  {"object":"list","data":[{"id":"...","name":"Product Updates","description":"...","subscription":"opt_in"}],"has_more":false}`,
+      errorCodes: ['auth_error', 'list_error'],
+      examples: [
+        'resend contacts topics 479e3145-dd38-4932-8c0c-e58b548c9e76',
+        'resend contacts topics user@example.com',
+        'resend contacts topics 479e3145-dd38-4932-8c0c-e58b548c9e76 --json',
+      ],
+    }),
   )
   .action(async (id, _opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;

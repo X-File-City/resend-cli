@@ -6,6 +6,7 @@ import { cancelAndExit } from '../../lib/prompts';
 import { createSpinner } from '../../lib/spinner';
 import { outputError, outputResult, errorMessage } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
+import { buildHelpText } from '../../lib/help-text';
 import { parsePropertiesJson } from './utils';
 
 export const createContactCommand = new Command('create')
@@ -18,8 +19,8 @@ export const createContactCommand = new Command('create')
   .option('--segment-id <id...>', 'Segment ID to add the contact to on creation (repeatable: --segment-id abc --segment-id def)')
   .addHelpText(
     'after',
-    `
-Non-interactive: --email is required. All other flags are optional.
+    buildHelpText({
+      context: `Non-interactive: --email is required. All other flags are optional.
 
 Properties: pass a JSON object string to --properties (e.g. '{"plan":"pro","company":"Acme"}').
   Properties are stored as custom contact attributes. To clear a property, set it to null.
@@ -27,26 +28,18 @@ Properties: pass a JSON object string to --properties (e.g. '{"plan":"pro","comp
 
 Segments: use --segment-id once per segment to add the contact to one or more segments on creation.
 
-Unsubscribed: setting --unsubscribed is a team-wide opt-out from all broadcasts, regardless of segments/topics.
-
-Global options (defined on root):
-  --api-key <key>  API key (or set RESEND_API_KEY env var)
-  --json           Force JSON output (also auto-enabled when stdout is piped)
-
-Output (--json or piped):
-  {"object":"contact","id":"<id>"}
-
-Errors (exit code 1):
-  {"error":{"message":"<message>","code":"<code>"}}
-  Codes: auth_error | missing_email | invalid_properties | create_error
-
-Examples:
-  $ resend contacts create --email jane@example.com
-  $ resend contacts create --email jane@example.com --first-name Jane --last-name Smith
-  $ resend contacts create --email jane@example.com --unsubscribed
-  $ resend contacts create --email jane@example.com --properties '{"company":"Acme","plan":"pro"}'
-  $ resend contacts create --email jane@example.com --segment-id seg_123 --segment-id seg_456
-  $ resend contacts create --email jane@example.com --first-name Jane --json`
+Unsubscribed: setting --unsubscribed is a team-wide opt-out from all broadcasts, regardless of segments/topics.`,
+      output: `  {"object":"contact","id":"<id>"}`,
+      errorCodes: ['auth_error', 'missing_email', 'invalid_properties', 'create_error'],
+      examples: [
+        'resend contacts create --email jane@example.com',
+        'resend contacts create --email jane@example.com --first-name Jane --last-name Smith',
+        'resend contacts create --email jane@example.com --unsubscribed',
+        `resend contacts create --email jane@example.com --properties '{"company":"Acme","plan":"pro"}'`,
+        'resend contacts create --email jane@example.com --segment-id seg_123 --segment-id seg_456',
+        'resend contacts create --email jane@example.com --first-name Jane --json',
+      ],
+    }),
   )
   .action(async (opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
