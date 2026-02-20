@@ -54,10 +54,11 @@ Examples:
       spinner.stop('Broadcast sent');
 
       if (!globalOpts.json && isInteractive()) {
+        const d = data!;
         if (opts.scheduledAt) {
-          console.log(`\nBroadcast scheduled: ${data!.id} (sends: ${opts.scheduledAt})`);
+          console.log(`\nBroadcast scheduled: ${d.id} (sends: ${opts.scheduledAt})`);
         } else {
-          console.log(`\nBroadcast sent: ${data!.id}`);
+          console.log(`\nBroadcast sent: ${d.id}`);
         }
       } else {
         outputResult(data, { json: globalOpts.json });

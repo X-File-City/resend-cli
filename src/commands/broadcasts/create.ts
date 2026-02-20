@@ -134,12 +134,13 @@ Examples:
       spinner.stop(opts.send ? 'Broadcast sent' : 'Broadcast created');
 
       if (!globalOpts.json && isInteractive()) {
+        const d = data!;
         if (opts.send) {
-          console.log(`\nBroadcast sent: ${data!.id}`);
+          console.log(`\nBroadcast sent: ${d.id}`);
         } else {
-          console.log(`\nBroadcast created: ${data!.id}`);
+          console.log(`\nBroadcast created: ${d.id}`);
           console.log('Status: draft');
-          console.log(`\nSend it with: resend broadcasts send ${data!.id}`);
+          console.log(`\nSend it with: resend broadcasts send ${d.id}`);
         }
       } else {
         outputResult(data, { json: globalOpts.json });

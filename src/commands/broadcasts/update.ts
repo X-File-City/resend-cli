@@ -34,7 +34,7 @@ Output (--json or piped):
 
 Errors (exit code 1):
   {"error":{"message":"<message>","code":"<code>"}}
-  Codes: auth_error | file_read_error | update_error
+  Codes: auth_error | no_changes | file_read_error | update_error
 
 Examples:
   $ resend broadcasts update bcast_123abc --subject "Updated Subject"
@@ -44,6 +44,13 @@ Examples:
   .action(async (id, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const resend = requireClient(globalOpts);
+
+    if (!opts.from && !opts.subject && !opts.html && !opts.htmlFile && !opts.text && !opts.name) {
+      outputError(
+        { message: 'Provide at least one option to update: --from, --subject, --html, --html-file, --text, or --name.', code: 'no_changes' },
+        { json: globalOpts.json }
+      );
+    }
 
     let html = opts.html;
 

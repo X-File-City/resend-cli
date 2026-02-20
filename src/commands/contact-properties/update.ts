@@ -30,7 +30,7 @@ Output (--json or piped):
 
 Errors (exit code 1):
   {"error":{"message":"<message>","code":"<code>"}}
-  Codes: auth_error | conflicting_flags | update_error
+  Codes: auth_error | no_changes | conflicting_flags | update_error
 
 Examples:
   $ resend contact-properties update prop_abc123 --fallback-value "Acme Corp"
@@ -41,6 +41,13 @@ Examples:
   .action(async (id, opts, cmd) => {
     const globalOpts = cmd.optsWithGlobals() as GlobalOpts;
     const resend = requireClient(globalOpts);
+
+    if (opts.fallbackValue === undefined && !opts.clearFallbackValue) {
+      outputError(
+        { message: 'Provide at least one option to update: --fallback-value or --clear-fallback-value.', code: 'no_changes' },
+        { json: globalOpts.json }
+      );
+    }
 
     if (opts.fallbackValue !== undefined && opts.clearFallbackValue) {
       outputError(

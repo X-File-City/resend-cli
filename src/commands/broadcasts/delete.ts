@@ -44,7 +44,7 @@ Examples:
     const spinner = createSpinner('Deleting broadcast...');
 
     try {
-      const { data, error } = await resend.broadcasts.remove(id);
+      const { error } = await resend.broadcasts.remove(id);
 
       if (error) {
         spinner.fail('Failed to delete broadcast');
@@ -56,7 +56,7 @@ Examples:
       if (!globalOpts.json && isInteractive()) {
         console.log('Broadcast deleted.');
       } else {
-        outputResult(data!, { json: globalOpts.json });
+        outputResult({ object: 'broadcast', id, deleted: true }, { json: globalOpts.json });
       }
     } catch (err) {
       spinner.fail('Failed to delete broadcast');

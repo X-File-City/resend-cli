@@ -4,7 +4,7 @@ import { requireClient } from '../../lib/client';
 import { createSpinner } from '../../lib/spinner';
 import { outputError, outputResult, errorMessage } from '../../lib/output';
 import { isInteractive } from '../../lib/tty';
-import { renderTopicsTable, contactIdentifier } from './utils';
+import { renderContactTopicsTable, contactIdentifier } from './utils';
 
 export const listContactTopicsCommand = new Command('topics')
   .description("List a contact's topic subscriptions")
@@ -55,7 +55,7 @@ Examples:
 
       const list = data!;
       if (!globalOpts.json && isInteractive()) {
-        console.log(renderTopicsTable(list.data));
+        console.log(renderContactTopicsTable(list.data));
       } else {
         outputResult(list, { json: globalOpts.json });
       }

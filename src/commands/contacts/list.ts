@@ -3,7 +3,7 @@ import type { GlobalOpts } from '../../lib/client';
 import { requireClient } from '../../lib/client';
 import { createSpinner } from '../../lib/spinner';
 import { outputError, outputResult, errorMessage } from '../../lib/output';
-import { parseLimitOpt, buildPaginationOpts } from '../../lib/pagination';
+import { parseLimitOpt, buildPaginationOpts, printPaginationHint } from '../../lib/pagination';
 import { isInteractive } from '../../lib/tty';
 import { renderContactsTable } from './utils';
 
@@ -59,10 +59,7 @@ Examples:
       const list = data!;
       if (!globalOpts.json && isInteractive()) {
         console.log(renderContactsTable(list.data));
-        if (list.has_more && list.data.length > 0) {
-          const last = list.data[list.data.length - 1];
-          console.log(`\nMore results available. Use --after ${last.id} to fetch the next page.`);
-        }
+        printPaginationHint(list);
       } else {
         outputResult(list, { json: globalOpts.json });
       }

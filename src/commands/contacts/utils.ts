@@ -12,7 +12,7 @@ export function renderContactsTable(
   return renderTable(['Email', 'First Name', 'Last Name', 'Unsubscribed', 'ID'], rows, '(no contacts)');
 }
 
-export function renderTopicsTable(topics: ContactTopic[]): string {
+export function renderContactTopicsTable(topics: ContactTopic[]): string {
   const rows = topics.map((t) => [t.name, t.subscription, t.id, t.description ?? '']);
   return renderTable(['Name', 'Subscription', 'ID', 'Description'], rows, '(no topic subscriptions)');
 }
