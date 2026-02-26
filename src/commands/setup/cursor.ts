@@ -2,37 +2,12 @@ import { Command } from '@commander-js/extra-typings';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 import type { GlobalOpts } from '../../lib/client';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
-import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
-import { mergeJsonConfig } from './utils';
-
-const RESEND_MCP_ENTRY = { command: 'resend', args: ['mcp', 'serve'] };
+import { writeMcpJsonConfig } from './utils';
 
 export async function setupCursor(globalOpts: GlobalOpts): Promise<void> {
   const configPath = join(homedir(), '.cursor', 'mcp.json');
-
-  try {
-    mergeJsonConfig(configPath, (existing) => ({
-      ...existing,
-      mcpServers: {
-        ...(existing.mcpServers as Record<string, unknown> | undefined),
-        resend: RESEND_MCP_ENTRY,
-      },
-    }));
-  } catch (err) {
-    outputError(
-      { message: `Failed to write Cursor config: ${errorMessage(err, 'unknown error')}`, code: 'config_write_error' },
-      { json: globalOpts.json },
-    );
-  }
-
-  if (!globalOpts.json && isInteractive()) {
-    console.log(`  ✔ Cursor configured: ${configPath}`);
-    console.log('  Restart Cursor for changes to take effect.');
-  } else {
-    outputResult({ configured: true, tool: 'cursor', config_path: configPath }, { json: globalOpts.json });
-  }
+  await writeMcpJsonConfig(configPath, 'mcpServers', 'cursor', 'Cursor', globalOpts, 'Restart Cursor for changes to take effect.');
 }
 
 export const cursorCommand = new Command('cursor')
@@ -47,7 +22,11 @@ Config written:
   ~/.cursor/mcp.json
   {
     "mcpServers": {
-      "resend": { "command": "resend", "args": ["mcp", "serve"] }
+      "resend": {
+        "command": "npx",
+        "args": ["-y", "resend-mcp"],
+        "env": { "RESEND_API_KEY": "<your-api-key>" }
+      }
     }
   }`,
     output: `  {"configured":true,"tool":"cursor","config_path":"~/.cursor/mcp.json"}`,

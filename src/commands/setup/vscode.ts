@@ -1,36 +1,12 @@
 import { Command } from '@commander-js/extra-typings';
 import { join } from 'node:path';
 import type { GlobalOpts } from '../../lib/client';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
-import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
-import { mergeJsonConfig } from './utils';
-
-const RESEND_VSCODE_ENTRY = { type: 'stdio', command: 'resend', args: ['mcp', 'serve'] };
+import { writeMcpJsonConfig } from './utils';
 
 export async function setupVscode(globalOpts: GlobalOpts): Promise<void> {
   const configPath = join(process.cwd(), '.vscode', 'mcp.json');
-
-  try {
-    mergeJsonConfig(configPath, (existing) => ({
-      ...existing,
-      servers: {
-        ...(existing.servers as Record<string, unknown> | undefined),
-        resend: RESEND_VSCODE_ENTRY,
-      },
-    }));
-  } catch (err) {
-    outputError(
-      { message: `Failed to write VS Code config: ${errorMessage(err, 'unknown error')}`, code: 'config_write_error' },
-      { json: globalOpts.json },
-    );
-  }
-
-  if (!globalOpts.json && isInteractive()) {
-    console.log(`  ✔ VS Code configured: ${configPath}`);
-  } else {
-    outputResult({ configured: true, tool: 'vscode', config_path: configPath }, { json: globalOpts.json });
-  }
+  await writeMcpJsonConfig(configPath, 'servers', 'vscode', 'VS Code', globalOpts);
 }
 
 export const vscodeCommand = new Command('vscode')
@@ -39,20 +15,23 @@ export const vscodeCommand = new Command('vscode')
     setup: true,
     context: `What it does:
   Writes .vscode/mcp.json in the CURRENT WORKING DIRECTORY.
-  Uses the "servers" key with "type": "stdio" (VS Code format — different from Cursor/Claude Desktop).
+  Uses the "servers" key (VS Code format — different from Cursor/Claude Desktop).
   Existing "servers" entries are preserved (idempotent).
 
 Config written:
   .vscode/mcp.json
   {
     "servers": {
-      "resend": { "type": "stdio", "command": "resend", "args": ["mcp", "serve"] }
+      "resend": {
+        "command": "npx",
+        "args": ["-y", "resend-mcp"],
+        "env": { "RESEND_API_KEY": "<your-api-key>" }
+      }
     }
   }
 
-Important format differences from other tools:
+Important format difference from other tools:
   - Key: "servers" (not "mcpServers")
-  - Entry requires "type": "stdio"
 
 Note: Run this command from your project root directory.`,
     output: `  {"configured":true,"tool":"vscode","config_path":"<cwd>/.vscode/mcp.json"}`,

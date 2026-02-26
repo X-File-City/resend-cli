@@ -11,6 +11,8 @@ mock.module('node:fs', () => ({
   mkdirSync: mock(() => {}),
   readdirSync: mock(() => []),
   lstatSync: mock(() => ({ isDirectory: () => false })),
+  unlinkSync: mock(() => {}),
+  chmodSync: mock(() => {}),
 }));
 
 // No mock.module for subcommand modules — the real source files are used.

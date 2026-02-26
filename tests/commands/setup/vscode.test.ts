@@ -15,6 +15,8 @@ mock.module('node:fs', () => ({
   mkdirSync: mockMkdirSync,
   readdirSync: mockReaddirSync,
   lstatSync: mockLstatSync,
+  unlinkSync: mock(() => {}),
+  chmodSync: mock(() => {}),
 }));
 
 describe('setupVscode', () => {
@@ -27,7 +29,7 @@ describe('setupVscode', () => {
     mockMkdirSync.mockClear();
   });
 
-  test('uses "servers" key (not "mcpServers") with type:stdio entry', async () => {
+  test('uses "servers" key (not "mcpServers") with npx entry', async () => {
     const { restore } = setupOutputSpies();
     try {
       const { setupVscode } = await import('../../../src/commands/setup/vscode');
@@ -36,9 +38,10 @@ describe('setupVscode', () => {
       const written = JSON.parse(mockWriteFileSync.mock.calls[0][1] as string);
       expect(written.servers).toBeDefined();
       expect(written.mcpServers).toBeUndefined();
-      expect(written.servers.resend.type).toBe('stdio');
-      expect(written.servers.resend.command).toBe('resend');
-      expect(written.servers.resend.args).toEqual(['mcp', 'serve']);
+      expect(written.servers.resend.type).toBeUndefined();
+      expect(written.servers.resend.command).toBe('npx');
+      expect(written.servers.resend.args).toEqual(['-y', 'resend-mcp']);
+      expect(typeof written.servers.resend.env.RESEND_API_KEY).toBe('string');
     } finally {
       restore();
     }

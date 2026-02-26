@@ -2,12 +2,8 @@ import { Command } from '@commander-js/extra-typings';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 import type { GlobalOpts } from '../../lib/client';
-import { outputError, outputResult, errorMessage } from '../../lib/output';
-import { isInteractive } from '../../lib/tty';
 import { buildHelpText } from '../../lib/help-text';
-import { mergeJsonConfig } from './utils';
-
-const RESEND_MCP_ENTRY = { command: 'resend', args: ['mcp', 'serve'] };
+import { writeMcpJsonConfig } from './utils';
 
 function claudeDesktopConfigPath(): string {
   const home = homedir();
@@ -22,28 +18,7 @@ function claudeDesktopConfigPath(): string {
 
 export async function setupClaudeDesktop(globalOpts: GlobalOpts): Promise<void> {
   const configPath = claudeDesktopConfigPath();
-
-  try {
-    mergeJsonConfig(configPath, (existing) => ({
-      ...existing,
-      mcpServers: {
-        ...(existing.mcpServers as Record<string, unknown> | undefined),
-        resend: RESEND_MCP_ENTRY,
-      },
-    }));
-  } catch (err) {
-    outputError(
-      { message: `Failed to write Claude Desktop config: ${errorMessage(err, 'unknown error')}`, code: 'config_write_error' },
-      { json: globalOpts.json },
-    );
-  }
-
-  if (!globalOpts.json && isInteractive()) {
-    console.log(`  ✔ Claude Desktop configured: ${configPath}`);
-    console.log('  Restart Claude Desktop for changes to take effect.');
-  } else {
-    outputResult({ configured: true, tool: 'claude-desktop', config_path: configPath }, { json: globalOpts.json });
-  }
+  await writeMcpJsonConfig(configPath, 'mcpServers', 'claude-desktop', 'Claude Desktop', globalOpts, 'Restart Claude Desktop for changes to take effect.');
 }
 
 export const claudeDesktopCommand = new Command('claude-desktop')
@@ -62,7 +37,11 @@ Config paths:
 Config written:
   {
     "mcpServers": {
-      "resend": { "command": "resend", "args": ["mcp", "serve"] }
+      "resend": {
+        "command": "npx",
+        "args": ["-y", "resend-mcp"],
+        "env": { "RESEND_API_KEY": "<your-api-key>" }
+      }
     }
   }
 

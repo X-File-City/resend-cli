@@ -15,6 +15,8 @@ mock.module('node:fs', () => ({
   mkdirSync: mockMkdirSync,
   readdirSync: mockReaddirSync,
   lstatSync: mockLstatSync,
+  unlinkSync: mock(() => {}),
+  chmodSync: mock(() => {}),
 }));
 
 describe('setupClaudeDesktop', () => {
@@ -35,8 +37,9 @@ describe('setupClaudeDesktop', () => {
 
       const written = JSON.parse(mockWriteFileSync.mock.calls[0][1] as string);
       expect(written.preferences).toBeDefined();
-      expect(written.mcpServers.resend.command).toBe('resend');
-      expect(written.mcpServers.resend.args).toEqual(['mcp', 'serve']);
+      expect(written.mcpServers.resend.command).toBe('npx');
+      expect(written.mcpServers.resend.args).toEqual(['-y', 'resend-mcp']);
+      expect(typeof written.mcpServers.resend.env.RESEND_API_KEY).toBe('string');
     } finally {
       restore();
     }
