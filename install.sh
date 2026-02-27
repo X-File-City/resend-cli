@@ -245,8 +245,9 @@ case $shell_name in
     shell_line="export PATH=\"$(tildify "$bin_dir"):\$PATH\""
     ;;
   fish)
-    config="${XDG_CONFIG_HOME:-$HOME/.config}/fish/config.fish"
-    shell_line="set -gx PATH $(tildify "$bin_dir") \$PATH"
+    config="${XDG_CONFIG_HOME:-$HOME/.config}/fish/conf.d/resend.fish"
+    mkdir -p "$(dirname "$config")"
+    shell_line="fish_add_path $(tildify "$bin_dir")"
     ;;
 esac
 
@@ -279,6 +280,11 @@ else
   bold "    export PATH=\"$(tildify "$bin_dir"):\$PATH\""
 fi
 
+echo ""
+info "  Next steps:"
+echo ""
+bold "    export RESEND_API_KEY=re_..."
+bold "    resend --help"
 echo ""
 
 }

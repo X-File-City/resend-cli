@@ -68,23 +68,28 @@ Write-Host ""
 Write-Info "Downloading from $url"
 Write-Host ""
 
-$tmpZip = Join-Path ([System.IO.Path]::GetTempPath()) "resend-$([System.Guid]::NewGuid()).zip"
+$tmpDir = Join-Path ([System.IO.Path]::GetTempPath()) "resend-$([System.Guid]::NewGuid())"
+New-Item -ItemType Directory -Path $tmpDir -Force | Out-Null
+$tmpZip = Join-Path $tmpDir 'resend.zip'
 
 try {
-  # Force TLS 1.2 for Windows PowerShell 5.1 (no-op on PowerShell 7+ where it is the default)
-  [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-  $ProgressPreference = 'SilentlyContinue'  # Invoke-WebRequest is ~10x faster without progress bar
-  Invoke-WebRequest -Uri $url -OutFile $tmpZip -UseBasicParsing
-} catch {
-  Write-Fail "Download failed.`n`n  Possible causes:`n    - No internet connection`n    - The version does not exist: $(if ($Version) { $Version } else { 'latest' })`n    - GitHub is unreachable`n`n  URL: $url"
+  try {
+    # Force TLS 1.2 for Windows PowerShell 5.1 (no-op on PowerShell 7+ where it is the default)
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    $ProgressPreference = 'SilentlyContinue'  # Invoke-WebRequest is ~10x faster without progress bar
+    Invoke-WebRequest -Uri $url -OutFile $tmpZip -UseBasicParsing
+  } catch {
+    Write-Fail "Download failed.`n`n  Possible causes:`n    - No internet connection`n    - The version does not exist: $(if ($Version) { $Version } else { 'latest' })`n    - GitHub is unreachable`n`n  URL: $url"
+  }
+
+  try {
+    Expand-Archive -Path $tmpZip -DestinationPath $binDir -Force
+  } catch {
+    Write-Fail "Failed to extract archive: $_"
+  }
 }
-
-try {
-  Expand-Archive -Path $tmpZip -DestinationPath $binDir -Force
-} catch {
-  Write-Fail "Failed to extract archive: $_"
-} finally {
-  Remove-Item -Path $tmpZip -Force -ErrorAction SilentlyContinue
+finally {
+  Remove-Item -Recurse -Force $tmpDir -ErrorAction SilentlyContinue
 }
 
 if (-not (Test-Path $exe)) {
@@ -126,7 +131,10 @@ $env:PATH = "$env:PATH;$binDir"  # Also update the current session
 
 Write-Info "Added $binDir to PATH (User scope)"
 Write-Host ""
-Write-Info "Restart your terminal, then run:"
+Write-Info "Restart your terminal, then:"
 Write-Host ""
+Write-Info "Next steps:"
+Write-Host ""
+Write-Host "    `$env:RESEND_API_KEY = 're_...'" -ForegroundColor Cyan
 Write-Host "    resend --help" -ForegroundColor Cyan
 Write-Host ""
