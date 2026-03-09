@@ -1,7 +1,21 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
-import { join } from 'node:path';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
 import { unlinkSync } from 'node:fs';
-import { setNonInteractive, mockExitThrow, captureTestEnv, setupOutputSpies, expectExit1 } from '../../helpers';
+import { join } from 'node:path';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  setNonInteractive,
+  setupOutputSpies,
+} from '../../helpers';
 
 const mockSend = mock(async () => ({
   data: { id: 'test-email-id-123' },
@@ -51,8 +65,17 @@ describe('send command', () => {
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
     await sendCommand.parseAsync(
-      ['--from', 'a@test.com', '--to', 'b@test.com', '--subject', 'Test', '--text', 'Hello'],
-      { from: 'user' }
+      [
+        '--from',
+        'a@test.com',
+        '--to',
+        'b@test.com',
+        '--subject',
+        'Test',
+        '--text',
+        'Hello',
+      ],
+      { from: 'user' },
     );
 
     expect(mockSend).toHaveBeenCalledTimes(1);
@@ -68,8 +91,17 @@ describe('send command', () => {
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
     await sendCommand.parseAsync(
-      ['--from', 'a@test.com', '--to', 'b@test.com', '--subject', 'Test', '--text', 'Body'],
-      { from: 'user' }
+      [
+        '--from',
+        'a@test.com',
+        '--to',
+        'b@test.com',
+        '--subject',
+        'Test',
+        '--text',
+        'Body',
+      ],
+      { from: 'user' },
     );
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -82,8 +114,17 @@ describe('send command', () => {
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
     await sendCommand.parseAsync(
-      ['--from', 'a@test.com', '--to', 'b@test.com', '--subject', 'Test', '--html', '<h1>Hello</h1>'],
-      { from: 'user' }
+      [
+        '--from',
+        'a@test.com',
+        '--to',
+        'b@test.com',
+        '--subject',
+        'Test',
+        '--html',
+        '<h1>Hello</h1>',
+      ],
+      { from: 'user' },
     );
 
     const callArgs = mockSend.mock.calls[0][0] as any;
@@ -96,8 +137,18 @@ describe('send command', () => {
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
     await sendCommand.parseAsync(
-      ['--from', 'a@test.com', '--to', 'b@test.com', 'c@test.com', '--subject', 'Test', '--text', 'Hi'],
-      { from: 'user' }
+      [
+        '--from',
+        'a@test.com',
+        '--to',
+        'b@test.com',
+        'c@test.com',
+        '--subject',
+        'Test',
+        '--text',
+        'Hi',
+      ],
+      { from: 'user' },
     );
 
     const callArgs = mockSend.mock.calls[0][0] as any;
@@ -114,9 +165,18 @@ describe('send command', () => {
     const { sendCommand } = await import('../../../src/commands/emails/send');
     await expectExit1(() =>
       sendCommand.parseAsync(
-        ['--from', 'a@test.com', '--to', 'b@test.com', '--subject', 'Test', '--text', 'Hi'],
-        { from: 'user' }
-      )
+        [
+          '--from',
+          'a@test.com',
+          '--to',
+          'b@test.com',
+          '--subject',
+          'Test',
+          '--text',
+          'Hi',
+        ],
+        { from: 'user' },
+      ),
     );
   });
 
@@ -126,7 +186,9 @@ describe('send command', () => {
     exitSpy = mockExitThrow();
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
-    await expectExit1(() => sendCommand.parseAsync(['--from', 'a@test.com'], { from: 'user' }));
+    await expectExit1(() =>
+      sendCommand.parseAsync(['--from', 'a@test.com'], { from: 'user' }),
+    );
 
     const allErrors = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(allErrors).toContain('--to');
@@ -142,8 +204,8 @@ describe('send command', () => {
     await expectExit1(() =>
       sendCommand.parseAsync(
         ['--from', 'a@test.com', '--to', 'b@test.com', '--subject', 'Test'],
-        { from: 'user' }
-      )
+        { from: 'user' },
+      ),
     );
   });
 
@@ -156,8 +218,17 @@ describe('send command', () => {
     try {
       const { sendCommand } = await import('../../../src/commands/emails/send');
       await sendCommand.parseAsync(
-        ['--from', 'a@test.com', '--to', 'b@test.com', '--subject', 'Test', '--html-file', tmpFile],
-        { from: 'user' }
+        [
+          '--from',
+          'a@test.com',
+          '--to',
+          'b@test.com',
+          '--subject',
+          'Test',
+          '--html-file',
+          tmpFile,
+        ],
+        { from: 'user' },
       );
 
       const callArgs = mockSend.mock.calls[0][0] as any;
@@ -173,10 +244,22 @@ describe('send command', () => {
     const { sendCommand } = await import('../../../src/commands/emails/send');
     await sendCommand.parseAsync(
       [
-        '--from', 'a@test.com', '--to', 'b@test.com', '--subject', 'Test', '--text', 'Body',
-        '--cc', 'cc@test.com', '--bcc', 'bcc@test.com', '--reply-to', 'reply@test.com',
+        '--from',
+        'a@test.com',
+        '--to',
+        'b@test.com',
+        '--subject',
+        'Test',
+        '--text',
+        'Body',
+        '--cc',
+        'cc@test.com',
+        '--bcc',
+        'bcc@test.com',
+        '--reply-to',
+        'reply@test.com',
       ],
-      { from: 'user' }
+      { from: 'user' },
     );
 
     const callArgs = mockSend.mock.calls[0][0] as any;
@@ -190,8 +273,17 @@ describe('send command', () => {
 
     const { sendCommand } = await import('../../../src/commands/emails/send');
     await sendCommand.parseAsync(
-      ['--from', 'a@test.com', '--to', 'b@test.com', '--subject', 'Test', '--text', 'Hello'],
-      { from: 'user' }
+      [
+        '--from',
+        'a@test.com',
+        '--to',
+        'b@test.com',
+        '--subject',
+        'Test',
+        '--text',
+        'Hello',
+      ],
+      { from: 'user' },
     );
 
     expect(mockDomainsList).not.toHaveBeenCalled();
@@ -199,9 +291,15 @@ describe('send command', () => {
   });
 
   test('degrades gracefully when domain fetch fails', async () => {
-    const { fetchVerifiedDomains } = await import('../../../src/commands/emails/send');
+    const { fetchVerifiedDomains } = await import(
+      '../../../src/commands/emails/send'
+    );
     const failingResend = {
-      domains: { list: mock(async () => { throw new Error('Network error'); }) },
+      domains: {
+        list: mock(async () => {
+          throw new Error('Network error');
+        }),
+      },
     } as any;
 
     // Should return [] without throwing, so the caller falls through to promptForMissing

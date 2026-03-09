@@ -1,17 +1,29 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
 import {
-  setNonInteractive,
-  mockExitThrow,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
   captureTestEnv,
-  setupOutputSpies,
   expectExit1,
+  mockExitThrow,
+  setNonInteractive,
+  setupOutputSpies,
 } from '../../helpers';
 
 const mockList = mock(async () => ({
   data: {
     object: 'list' as const,
     data: [
-      { id: 'seg_abc123', name: 'Newsletter Subscribers', created_at: '2026-01-01T00:00:00.000Z' },
+      {
+        id: 'seg_abc123',
+        name: 'Newsletter Subscribers',
+        created_at: '2026-01-01T00:00:00.000Z',
+      },
     ],
     has_more: false,
   },
@@ -52,7 +64,9 @@ describe('segments list command', () => {
   test('calls SDK with default limit of 10', async () => {
     spies = setupOutputSpies();
 
-    const { listSegmentsCommand } = await import('../../../src/commands/segments/list');
+    const { listSegmentsCommand } = await import(
+      '../../../src/commands/segments/list'
+    );
     await listSegmentsCommand.parseAsync([], { from: 'user' });
 
     expect(mockList).toHaveBeenCalledTimes(1);
@@ -63,7 +77,9 @@ describe('segments list command', () => {
   test('calls SDK with custom --limit', async () => {
     spies = setupOutputSpies();
 
-    const { listSegmentsCommand } = await import('../../../src/commands/segments/list');
+    const { listSegmentsCommand } = await import(
+      '../../../src/commands/segments/list'
+    );
     await listSegmentsCommand.parseAsync(['--limit', '25'], { from: 'user' });
 
     const args = mockList.mock.calls[0][0] as any;
@@ -73,8 +89,12 @@ describe('segments list command', () => {
   test('calls SDK with --after cursor', async () => {
     spies = setupOutputSpies();
 
-    const { listSegmentsCommand } = await import('../../../src/commands/segments/list');
-    await listSegmentsCommand.parseAsync(['--after', 'cursor_xyz'], { from: 'user' });
+    const { listSegmentsCommand } = await import(
+      '../../../src/commands/segments/list'
+    );
+    await listSegmentsCommand.parseAsync(['--after', 'cursor_xyz'], {
+      from: 'user',
+    });
 
     const args = mockList.mock.calls[0][0] as any;
     expect(args.after).toBe('cursor_xyz');
@@ -83,7 +103,9 @@ describe('segments list command', () => {
   test('outputs JSON list when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { listSegmentsCommand } = await import('../../../src/commands/segments/list');
+    const { listSegmentsCommand } = await import(
+      '../../../src/commands/segments/list'
+    );
     await listSegmentsCommand.parseAsync([], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -99,8 +121,12 @@ describe('segments list command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listSegmentsCommand } = await import('../../../src/commands/segments/list');
-    await expectExit1(() => listSegmentsCommand.parseAsync(['--limit', '0'], { from: 'user' }));
+    const { listSegmentsCommand } = await import(
+      '../../../src/commands/segments/list'
+    );
+    await expectExit1(() =>
+      listSegmentsCommand.parseAsync(['--limit', '0'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('invalid_limit');
@@ -113,8 +139,12 @@ describe('segments list command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listSegmentsCommand } = await import('../../../src/commands/segments/list');
-    await expectExit1(() => listSegmentsCommand.parseAsync([], { from: 'user' }));
+    const { listSegmentsCommand } = await import(
+      '../../../src/commands/segments/list'
+    );
+    await expectExit1(() =>
+      listSegmentsCommand.parseAsync([], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -122,13 +152,20 @@ describe('segments list command', () => {
 
   test('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockList.mockResolvedValueOnce({ data: null, error: { message: 'Server error', name: 'server_error' } } as any);
+    mockList.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'Server error', name: 'server_error' },
+    } as any);
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { listSegmentsCommand } = await import('../../../src/commands/segments/list');
-    await expectExit1(() => listSegmentsCommand.parseAsync([], { from: 'user' }));
+    const { listSegmentsCommand } = await import(
+      '../../../src/commands/segments/list'
+    );
+    await expectExit1(() =>
+      listSegmentsCommand.parseAsync([], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('list_error');

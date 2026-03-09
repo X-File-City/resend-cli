@@ -7,7 +7,9 @@ describe('buildHelpText', () => {
       context: 'Some context line\n\nNon-interactive: --required-flag <value>',
       output: '  {"id":"em_123"}',
       errorCodes: ['auth_error', 'send_error'],
-      examples: ['resend emails send --to user@example.com --subject Hi --text Hello'],
+      examples: [
+        'resend emails send --to user@example.com --subject Hi --text Hello',
+      ],
       setup: false,
     });
 
@@ -71,7 +73,8 @@ describe('buildHelpText', () => {
   });
 
   it('multi-line output — verbatim after the Output header', () => {
-    const multiLineOutput = '  {"id":"em_123"}\n  // or with all fields:\n  {"id":"em_456","to":["a@b.com"]}';
+    const multiLineOutput =
+      '  {"id":"em_123"}\n  // or with all fields:\n  {"id":"em_456","to":["a@b.com"]}';
     const result = buildHelpText({
       output: multiLineOutput,
       errorCodes: ['auth_error'],

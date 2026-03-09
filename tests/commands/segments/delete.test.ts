@@ -1,10 +1,18 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
 import {
-  setNonInteractive,
-  mockExitThrow,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
   captureTestEnv,
-  setupOutputSpies,
   expectExit1,
+  mockExitThrow,
+  setNonInteractive,
+  setupOutputSpies,
 } from '../../helpers';
 
 const mockRemove = mock(async () => ({
@@ -46,8 +54,12 @@ describe('segments delete command', () => {
   test('deletes segment with --yes flag', async () => {
     spies = setupOutputSpies();
 
-    const { deleteSegmentCommand } = await import('../../../src/commands/segments/delete');
-    await deleteSegmentCommand.parseAsync(['seg_abc123', '--yes'], { from: 'user' });
+    const { deleteSegmentCommand } = await import(
+      '../../../src/commands/segments/delete'
+    );
+    await deleteSegmentCommand.parseAsync(['seg_abc123', '--yes'], {
+      from: 'user',
+    });
 
     expect(mockRemove).toHaveBeenCalledTimes(1);
     expect(mockRemove.mock.calls[0][0]).toBe('seg_abc123');
@@ -56,8 +68,12 @@ describe('segments delete command', () => {
   test('outputs synthesized JSON result when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { deleteSegmentCommand } = await import('../../../src/commands/segments/delete');
-    await deleteSegmentCommand.parseAsync(['seg_abc123', '--yes'], { from: 'user' });
+    const { deleteSegmentCommand } = await import(
+      '../../../src/commands/segments/delete'
+    );
+    await deleteSegmentCommand.parseAsync(['seg_abc123', '--yes'], {
+      from: 'user',
+    });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
@@ -71,8 +87,12 @@ describe('segments delete command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteSegmentCommand } = await import('../../../src/commands/segments/delete');
-    await expectExit1(() => deleteSegmentCommand.parseAsync(['seg_abc123'], { from: 'user' }));
+    const { deleteSegmentCommand } = await import(
+      '../../../src/commands/segments/delete'
+    );
+    await expectExit1(() =>
+      deleteSegmentCommand.parseAsync(['seg_abc123'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('confirmation_required');
@@ -83,8 +103,12 @@ describe('segments delete command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteSegmentCommand } = await import('../../../src/commands/segments/delete');
-    await expectExit1(() => deleteSegmentCommand.parseAsync(['seg_abc123'], { from: 'user' }));
+    const { deleteSegmentCommand } = await import(
+      '../../../src/commands/segments/delete'
+    );
+    await expectExit1(() =>
+      deleteSegmentCommand.parseAsync(['seg_abc123'], { from: 'user' }),
+    );
 
     expect(mockRemove).not.toHaveBeenCalled();
   });
@@ -96,8 +120,14 @@ describe('segments delete command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteSegmentCommand } = await import('../../../src/commands/segments/delete');
-    await expectExit1(() => deleteSegmentCommand.parseAsync(['seg_abc123', '--yes'], { from: 'user' }));
+    const { deleteSegmentCommand } = await import(
+      '../../../src/commands/segments/delete'
+    );
+    await expectExit1(() =>
+      deleteSegmentCommand.parseAsync(['seg_abc123', '--yes'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -105,13 +135,22 @@ describe('segments delete command', () => {
 
   test('errors with delete_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockRemove.mockResolvedValueOnce({ data: null, error: { message: 'Segment not found', name: 'not_found' } } as any);
+    mockRemove.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'Segment not found', name: 'not_found' },
+    } as any);
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { deleteSegmentCommand } = await import('../../../src/commands/segments/delete');
-    await expectExit1(() => deleteSegmentCommand.parseAsync(['seg_nonexistent', '--yes'], { from: 'user' }));
+    const { deleteSegmentCommand } = await import(
+      '../../../src/commands/segments/delete'
+    );
+    await expectExit1(() =>
+      deleteSegmentCommand.parseAsync(['seg_nonexistent', '--yes'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('delete_error');

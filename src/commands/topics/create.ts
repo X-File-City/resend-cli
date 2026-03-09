@@ -1,20 +1,26 @@
-import { Command, Option } from '@commander-js/extra-typings';
 import * as p from '@clack/prompts';
-import type { GlobalOpts } from '../../lib/client';
+import { Command, Option } from '@commander-js/extra-typings';
 import { runCreate } from '../../lib/actions';
-import { cancelAndExit } from '../../lib/prompts';
-import { outputError } from '../../lib/output';
-import { isInteractive } from '../../lib/tty';
+import type { GlobalOpts } from '../../lib/client';
 import { buildHelpText } from '../../lib/help-text';
+import { outputError } from '../../lib/output';
+import { cancelAndExit } from '../../lib/prompts';
+import { isInteractive } from '../../lib/tty';
 
 export const createTopicCommand = new Command('create')
   .description('Create a new topic for subscription management')
   .option('--name <name>', 'Topic name (required)')
-  .option('--description <description>', 'Description shown to contacts when managing subscriptions')
+  .option(
+    '--description <description>',
+    'Description shown to contacts when managing subscriptions',
+  )
   .addOption(
-    new Option('--default-subscription <mode>', 'Default subscription state for contacts')
+    new Option(
+      '--default-subscription <mode>',
+      'Default subscription state for contacts',
+    )
       .choices(['opt_in', 'opt_out'] as const)
-      .default('opt_in' as const)
+      .default('opt_in' as const),
   )
   .addHelpText(
     'after',
@@ -45,26 +51,39 @@ Non-interactive: --name is required.`,
 
     if (!name) {
       if (!isInteractive()) {
-        outputError({ message: 'Missing --name flag.', code: 'missing_name' }, { json: globalOpts.json });
+        outputError(
+          { message: 'Missing --name flag.', code: 'missing_name' },
+          { json: globalOpts.json },
+        );
       }
       const result = await p.text({
         message: 'Topic name',
         placeholder: 'Product Updates',
         validate: (v) => (!v ? 'Name is required' : undefined),
       });
-      if (p.isCancel(result)) cancelAndExit('Cancelled.');
+      if (p.isCancel(result)) {
+        cancelAndExit('Cancelled.');
+      }
       name = result;
     }
 
-    await runCreate({
-      spinner: { loading: 'Creating topic...', success: 'Topic created', fail: 'Failed to create topic' },
-      sdkCall: (resend) => resend.topics.create({
-        name: name!,
-        defaultSubscription: opts.defaultSubscription,
-        ...(opts.description && { description: opts.description }),
-      }),
-      onInteractive: (data) => {
-        console.log(`\nTopic created: ${data.id}`);
+    await runCreate(
+      {
+        spinner: {
+          loading: 'Creating topic...',
+          success: 'Topic created',
+          fail: 'Failed to create topic',
+        },
+        sdkCall: (resend) =>
+          resend.topics.create({
+            name: name!,
+            defaultSubscription: opts.defaultSubscription,
+            ...(opts.description && { description: opts.description }),
+          }),
+        onInteractive: (data) => {
+          console.log(`\nTopic created: ${data.id}`);
+        },
       },
-    }, globalOpts);
+      globalOpts,
+    );
   });

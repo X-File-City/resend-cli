@@ -1,11 +1,11 @@
 import { Command } from '@commander-js/extra-typings';
+import { buildHelpText } from '../../lib/help-text';
 import { createBroadcastCommand } from './create';
-import { sendBroadcastCommand } from './send';
+import { deleteBroadcastCommand } from './delete';
 import { getBroadcastCommand } from './get';
 import { listBroadcastsCommand } from './list';
+import { sendBroadcastCommand } from './send';
 import { updateBroadcastCommand } from './update';
-import { deleteBroadcastCommand } from './delete';
-import { buildHelpText } from '../../lib/help-text';
 
 export const broadcastsCommand = new Command('broadcasts')
   .description('Manage broadcasts — bulk email to a segment of contacts')
@@ -33,7 +33,7 @@ Scheduling:
         'resend broadcasts update bcast_123abc --subject "Updated Subject"',
         'resend broadcasts delete bcast_123abc --yes',
       ],
-    })
+    }),
   )
   .addCommand(createBroadcastCommand)
   .addCommand(sendBroadcastCommand)

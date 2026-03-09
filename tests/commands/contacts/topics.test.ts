@@ -1,11 +1,30 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
-import { setNonInteractive, mockExitThrow, captureTestEnv, setupOutputSpies, expectExit1 } from '../../helpers';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  setNonInteractive,
+  setupOutputSpies,
+} from '../../helpers';
 
 const mockListTopics = mock(async () => ({
   data: {
     object: 'list' as const,
     data: [
-      { id: 'topic_abc', name: 'Product Updates', description: 'Updates about the product', subscription: 'opt_in' as const },
+      {
+        id: 'topic_abc',
+        name: 'Product Updates',
+        description: 'Updates about the product',
+        subscription: 'opt_in' as const,
+      },
     ],
     has_more: false,
   },
@@ -48,8 +67,12 @@ describe('contacts topics command', () => {
   test('lists topics by contact ID', async () => {
     spies = setupOutputSpies();
 
-    const { listContactTopicsCommand } = await import('../../../src/commands/contacts/topics');
-    await listContactTopicsCommand.parseAsync(['contact_abc123'], { from: 'user' });
+    const { listContactTopicsCommand } = await import(
+      '../../../src/commands/contacts/topics'
+    );
+    await listContactTopicsCommand.parseAsync(['contact_abc123'], {
+      from: 'user',
+    });
 
     expect(mockListTopics).toHaveBeenCalledTimes(1);
     const args = mockListTopics.mock.calls[0][0] as any;
@@ -59,8 +82,12 @@ describe('contacts topics command', () => {
   test('lists topics by contact email', async () => {
     spies = setupOutputSpies();
 
-    const { listContactTopicsCommand } = await import('../../../src/commands/contacts/topics');
-    await listContactTopicsCommand.parseAsync(['jane@example.com'], { from: 'user' });
+    const { listContactTopicsCommand } = await import(
+      '../../../src/commands/contacts/topics'
+    );
+    await listContactTopicsCommand.parseAsync(['jane@example.com'], {
+      from: 'user',
+    });
 
     const args = mockListTopics.mock.calls[0][0] as any;
     expect(args.email).toBe('jane@example.com');
@@ -69,8 +96,12 @@ describe('contacts topics command', () => {
   test('outputs JSON list when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { listContactTopicsCommand } = await import('../../../src/commands/contacts/topics');
-    await listContactTopicsCommand.parseAsync(['contact_abc123'], { from: 'user' });
+    const { listContactTopicsCommand } = await import(
+      '../../../src/commands/contacts/topics'
+    );
+    await listContactTopicsCommand.parseAsync(['contact_abc123'], {
+      from: 'user',
+    });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
@@ -86,8 +117,12 @@ describe('contacts topics command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listContactTopicsCommand } = await import('../../../src/commands/contacts/topics');
-    await expectExit1(() => listContactTopicsCommand.parseAsync(['contact_abc123'], { from: 'user' }));
+    const { listContactTopicsCommand } = await import(
+      '../../../src/commands/contacts/topics'
+    );
+    await expectExit1(() =>
+      listContactTopicsCommand.parseAsync(['contact_abc123'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -95,13 +130,20 @@ describe('contacts topics command', () => {
 
   test('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockListTopics.mockResolvedValueOnce({ data: null, error: { message: 'Not found', name: 'not_found' } } as any);
+    mockListTopics.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'Not found', name: 'not_found' },
+    } as any);
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { listContactTopicsCommand } = await import('../../../src/commands/contacts/topics');
-    await expectExit1(() => listContactTopicsCommand.parseAsync(['contact_abc123'], { from: 'user' }));
+    const { listContactTopicsCommand } = await import(
+      '../../../src/commands/contacts/topics'
+    );
+    await expectExit1(() =>
+      listContactTopicsCommand.parseAsync(['contact_abc123'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('list_error');

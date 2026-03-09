@@ -1,10 +1,10 @@
 import { Command } from '@commander-js/extra-typings';
 import { buildHelpText } from '../../lib/help-text';
 import { createTopicCommand } from './create';
+import { deleteTopicCommand } from './delete';
 import { getTopicCommand } from './get';
 import { listTopicsCommand } from './list';
 import { updateTopicCommand } from './update';
-import { deleteTopicCommand } from './delete';
 
 export const topicsCommand = new Command('topics')
   .description('Manage topics for contact subscription preferences')

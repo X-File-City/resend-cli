@@ -1,14 +1,26 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
 import {
-  setNonInteractive,
-  mockExitThrow,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
   captureTestEnv,
-  setupOutputSpies,
   expectExit1,
+  mockExitThrow,
+  setNonInteractive,
+  setupOutputSpies,
 } from '../../helpers';
 
 const mockCreate = mock(async () => ({
-  data: { object: 'webhook' as const, id: 'wh_abc123', signing_secret: 'whsec_test1234' },
+  data: {
+    object: 'webhook' as const,
+    id: 'wh_abc123',
+    signing_secret: 'whsec_test1234',
+  },
   error: null,
 }));
 
@@ -46,10 +58,18 @@ describe('webhooks create command', () => {
   test('creates webhook with --endpoint and explicit --events', async () => {
     spies = setupOutputSpies();
 
-    const { createWebhookCommand } = await import('../../../src/commands/webhooks/create');
+    const { createWebhookCommand } = await import(
+      '../../../src/commands/webhooks/create'
+    );
     await createWebhookCommand.parseAsync(
-      ['--endpoint', 'https://app.example.com/hooks', '--events', 'email.sent', 'email.bounced'],
-      { from: 'user' }
+      [
+        '--endpoint',
+        'https://app.example.com/hooks',
+        '--events',
+        'email.sent',
+        'email.bounced',
+      ],
+      { from: 'user' },
     );
 
     expect(mockCreate).toHaveBeenCalledTimes(1);
@@ -61,10 +81,12 @@ describe('webhooks create command', () => {
   test('expands "all" shorthand to all 17 events', async () => {
     spies = setupOutputSpies();
 
-    const { createWebhookCommand } = await import('../../../src/commands/webhooks/create');
+    const { createWebhookCommand } = await import(
+      '../../../src/commands/webhooks/create'
+    );
     await createWebhookCommand.parseAsync(
       ['--endpoint', 'https://app.example.com/hooks', '--events', 'all'],
-      { from: 'user' }
+      { from: 'user' },
     );
 
     const args = mockCreate.mock.calls[0][0] as any;
@@ -77,10 +99,12 @@ describe('webhooks create command', () => {
   test('outputs JSON with id and signing_secret when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { createWebhookCommand } = await import('../../../src/commands/webhooks/create');
+    const { createWebhookCommand } = await import(
+      '../../../src/commands/webhooks/create'
+    );
     await createWebhookCommand.parseAsync(
       ['--endpoint', 'https://app.example.com/hooks', '--events', 'email.sent'],
-      { from: 'user' }
+      { from: 'user' },
     );
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -94,9 +118,13 @@ describe('webhooks create command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createWebhookCommand } = await import('../../../src/commands/webhooks/create');
+    const { createWebhookCommand } = await import(
+      '../../../src/commands/webhooks/create'
+    );
     await expectExit1(() =>
-      createWebhookCommand.parseAsync(['--events', 'email.sent'], { from: 'user' })
+      createWebhookCommand.parseAsync(['--events', 'email.sent'], {
+        from: 'user',
+      }),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -108,9 +136,14 @@ describe('webhooks create command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createWebhookCommand } = await import('../../../src/commands/webhooks/create');
+    const { createWebhookCommand } = await import(
+      '../../../src/commands/webhooks/create'
+    );
     await expectExit1(() =>
-      createWebhookCommand.parseAsync(['--endpoint', 'https://app.example.com/hooks'], { from: 'user' })
+      createWebhookCommand.parseAsync(
+        ['--endpoint', 'https://app.example.com/hooks'],
+        { from: 'user' },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -122,9 +155,13 @@ describe('webhooks create command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createWebhookCommand } = await import('../../../src/commands/webhooks/create');
+    const { createWebhookCommand } = await import(
+      '../../../src/commands/webhooks/create'
+    );
     await expectExit1(() =>
-      createWebhookCommand.parseAsync(['--events', 'email.sent'], { from: 'user' })
+      createWebhookCommand.parseAsync(['--events', 'email.sent'], {
+        from: 'user',
+      }),
     );
 
     expect(mockCreate).not.toHaveBeenCalled();
@@ -137,12 +174,19 @@ describe('webhooks create command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createWebhookCommand } = await import('../../../src/commands/webhooks/create');
+    const { createWebhookCommand } = await import(
+      '../../../src/commands/webhooks/create'
+    );
     await expectExit1(() =>
       createWebhookCommand.parseAsync(
-        ['--endpoint', 'https://app.example.com/hooks', '--events', 'email.sent'],
-        { from: 'user' }
-      )
+        [
+          '--endpoint',
+          'https://app.example.com/hooks',
+          '--events',
+          'email.sent',
+        ],
+        { from: 'user' },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -151,17 +195,27 @@ describe('webhooks create command', () => {
 
   test('errors with create_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockCreate.mockResolvedValueOnce({ data: null, error: { message: 'Invalid endpoint', name: 'validation_error' } } as any);
+    mockCreate.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'Invalid endpoint', name: 'validation_error' },
+    } as any);
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { createWebhookCommand } = await import('../../../src/commands/webhooks/create');
+    const { createWebhookCommand } = await import(
+      '../../../src/commands/webhooks/create'
+    );
     await expectExit1(() =>
       createWebhookCommand.parseAsync(
-        ['--endpoint', 'https://app.example.com/hooks', '--events', 'email.sent'],
-        { from: 'user' }
-      )
+        [
+          '--endpoint',
+          'https://app.example.com/hooks',
+          '--events',
+          'email.sent',
+        ],
+        { from: 'user' },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

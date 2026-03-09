@@ -1,5 +1,10 @@
-import { describe, test, expect, mock, spyOn, afterEach } from 'bun:test';
-import { captureTestEnv, setNonInteractive, mockExitThrow, expectExit1 } from '../../helpers';
+import { afterEach, describe, expect, mock, spyOn, test } from 'bun:test';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  setNonInteractive,
+} from '../../helpers';
 
 // Provide a complete node:fs mock so @clack/prompts (which imports readdirSync
 // and lstatSync) does not fail when this file runs after another test file that
@@ -29,7 +34,9 @@ describe('setup index — non-interactive guard', () => {
     const exitSpy = mockExitThrow();
 
     try {
-      const { setupCommand } = await import('../../../src/commands/setup/index');
+      const { setupCommand } = await import(
+        '../../../src/commands/setup/index'
+      );
       await expectExit1(() => setupCommand.parseAsync([], { from: 'user' }));
 
       const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

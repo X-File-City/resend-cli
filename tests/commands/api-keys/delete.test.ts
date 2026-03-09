@@ -1,5 +1,19 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
-import { setNonInteractive, mockExitThrow, captureTestEnv, setupOutputSpies, expectExit1 } from '../../helpers';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  setNonInteractive,
+  setupOutputSpies,
+} from '../../helpers';
 
 const mockRemove = mock(async () => ({
   data: {},
@@ -40,8 +54,12 @@ describe('api-keys delete command', () => {
   test('deletes API key with --yes flag', async () => {
     spies = setupOutputSpies();
 
-    const { deleteApiKeyCommand } = await import('../../../src/commands/api-keys/delete');
-    await deleteApiKeyCommand.parseAsync(['test-key-id', '--yes'], { from: 'user' });
+    const { deleteApiKeyCommand } = await import(
+      '../../../src/commands/api-keys/delete'
+    );
+    await deleteApiKeyCommand.parseAsync(['test-key-id', '--yes'], {
+      from: 'user',
+    });
 
     expect(mockRemove).toHaveBeenCalledWith('test-key-id');
   });
@@ -49,8 +67,12 @@ describe('api-keys delete command', () => {
   test('outputs synthesized deleted JSON on success', async () => {
     spies = setupOutputSpies();
 
-    const { deleteApiKeyCommand } = await import('../../../src/commands/api-keys/delete');
-    await deleteApiKeyCommand.parseAsync(['test-key-id', '--yes'], { from: 'user' });
+    const { deleteApiKeyCommand } = await import(
+      '../../../src/commands/api-keys/delete'
+    );
+    await deleteApiKeyCommand.parseAsync(['test-key-id', '--yes'], {
+      from: 'user',
+    });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
@@ -63,8 +85,12 @@ describe('api-keys delete command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteApiKeyCommand } = await import('../../../src/commands/api-keys/delete');
-    await expectExit1(() => deleteApiKeyCommand.parseAsync(['test-key-id'], { from: 'user' }));
+    const { deleteApiKeyCommand } = await import(
+      '../../../src/commands/api-keys/delete'
+    );
+    await expectExit1(() =>
+      deleteApiKeyCommand.parseAsync(['test-key-id'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('confirmation_required');
@@ -75,8 +101,12 @@ describe('api-keys delete command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteApiKeyCommand } = await import('../../../src/commands/api-keys/delete');
-    await expectExit1(() => deleteApiKeyCommand.parseAsync(['test-key-id'], { from: 'user' }));
+    const { deleteApiKeyCommand } = await import(
+      '../../../src/commands/api-keys/delete'
+    );
+    await expectExit1(() =>
+      deleteApiKeyCommand.parseAsync(['test-key-id'], { from: 'user' }),
+    );
 
     expect(mockRemove).not.toHaveBeenCalled();
   });
@@ -88,8 +118,14 @@ describe('api-keys delete command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { deleteApiKeyCommand } = await import('../../../src/commands/api-keys/delete');
-    await expectExit1(() => deleteApiKeyCommand.parseAsync(['test-key-id', '--yes'], { from: 'user' }));
+    const { deleteApiKeyCommand } = await import(
+      '../../../src/commands/api-keys/delete'
+    );
+    await expectExit1(() =>
+      deleteApiKeyCommand.parseAsync(['test-key-id', '--yes'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -97,13 +133,22 @@ describe('api-keys delete command', () => {
 
   test('errors with delete_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockRemove.mockResolvedValueOnce({ data: null, error: { message: 'API key not found', name: 'not_found' } } as any);
+    mockRemove.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'API key not found', name: 'not_found' },
+    } as any);
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { deleteApiKeyCommand } = await import('../../../src/commands/api-keys/delete');
-    await expectExit1(() => deleteApiKeyCommand.parseAsync(['test-key-id', '--yes'], { from: 'user' }));
+    const { deleteApiKeyCommand } = await import(
+      '../../../src/commands/api-keys/delete'
+    );
+    await expectExit1(() =>
+      deleteApiKeyCommand.parseAsync(['test-key-id', '--yes'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('delete_error');

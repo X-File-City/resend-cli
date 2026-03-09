@@ -1,12 +1,14 @@
 import { Command } from '@commander-js/extra-typings';
 import { buildHelpText } from '../../lib/help-text';
 import { createSegmentCommand } from './create';
+import { deleteSegmentCommand } from './delete';
 import { getSegmentCommand } from './get';
 import { listSegmentsCommand } from './list';
-import { deleteSegmentCommand } from './delete';
 
 export const segmentsCommand = new Command('segments')
-  .description('Manage segments — named groups of contacts used to target broadcasts')
+  .description(
+    'Manage segments — named groups of contacts used to target broadcasts',
+  )
   .addHelpText(
     'after',
     buildHelpText({

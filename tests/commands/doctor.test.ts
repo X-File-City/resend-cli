@@ -1,6 +1,19 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
 import { Command } from '@commander-js/extra-typings';
-import { captureTestEnv, setupOutputSpies, expectExit1, mockExitThrow } from '../helpers';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  setupOutputSpies,
+} from '../helpers';
 
 // Mock resend SDK for doctor
 mock.module('resend', () => ({
@@ -98,7 +111,9 @@ describe('doctor command', () => {
     process.env.XDG_CONFIG_HOME = '/tmp/nonexistent-resend';
 
     spies = setupOutputSpies();
-    exitSpy = spyOn(process, 'exit').mockImplementation(() => undefined as never);
+    exitSpy = spyOn(process, 'exit').mockImplementation(
+      () => undefined as never,
+    );
 
     const program = await createDoctorProgram();
     await program.parseAsync(['doctor', '--json'], { from: 'user' });
@@ -137,6 +152,8 @@ describe('doctor command', () => {
     exitSpy = mockExitThrow();
 
     const program = await createDoctorProgram();
-    await expectExit1(() => program.parseAsync(['doctor', '--json'], { from: 'user' }));
+    await expectExit1(() =>
+      program.parseAsync(['doctor', '--json'], { from: 'user' }),
+    );
   });
 });

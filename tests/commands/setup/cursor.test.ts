@@ -1,9 +1,16 @@
-import { describe, test, expect, mock, spyOn, afterEach } from 'bun:test';
-import { captureTestEnv, setupOutputSpies, mockExitThrow, expectExit1 } from '../../helpers';
+import { afterEach, describe, expect, mock, spyOn, test } from 'bun:test';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  setupOutputSpies,
+} from '../../helpers';
 
 const mockWriteFileSync = mock(() => {});
 const mockMkdirSync = mock(() => {});
-const mockReadFileSync = mock(() => JSON.stringify({ mcpServers: { other: { command: 'other' } } }));
+const mockReadFileSync = mock(() =>
+  JSON.stringify({ mcpServers: { other: { command: 'other' } } }),
+);
 const mockExistsSync = mock(() => true);
 const mockReaddirSync = mock(() => []);
 const mockLstatSync = mock(() => ({ isDirectory: () => false }));
@@ -32,14 +39,18 @@ describe('setupCursor', () => {
   test('merges resend into existing mcpServers without clobbering other entries', async () => {
     const { restore } = setupOutputSpies();
     try {
-      const { setupCursor } = await import('../../../src/commands/setup/cursor');
+      const { setupCursor } = await import(
+        '../../../src/commands/setup/cursor'
+      );
       await setupCursor({ json: true });
 
       const written = JSON.parse(mockWriteFileSync.mock.calls[0][1] as string);
       expect(written.mcpServers.other).toBeDefined();
       expect(written.mcpServers.resend.command).toBe('npx');
       expect(written.mcpServers.resend.args).toEqual(['-y', 'resend-mcp']);
-      expect(typeof written.mcpServers.resend.env.RESEND_API_KEY).toBe('string');
+      expect(typeof written.mcpServers.resend.env.RESEND_API_KEY).toBe(
+        'string',
+      );
     } finally {
       restore();
     }
@@ -49,7 +60,9 @@ describe('setupCursor', () => {
     mockExistsSync.mockReturnValueOnce(false);
     const { restore } = setupOutputSpies();
     try {
-      const { setupCursor } = await import('../../../src/commands/setup/cursor');
+      const { setupCursor } = await import(
+        '../../../src/commands/setup/cursor'
+      );
       await setupCursor({ json: true });
 
       const written = JSON.parse(mockWriteFileSync.mock.calls[0][1] as string);
@@ -63,7 +76,9 @@ describe('setupCursor', () => {
   test('outputs JSON with configured:true in non-interactive mode', async () => {
     const { logSpy, restore } = setupOutputSpies();
     try {
-      const { setupCursor } = await import('../../../src/commands/setup/cursor');
+      const { setupCursor } = await import(
+        '../../../src/commands/setup/cursor'
+      );
       await setupCursor({ json: true });
 
       const output = JSON.parse(logSpy.mock.calls[0][0] as string);
@@ -76,12 +91,16 @@ describe('setupCursor', () => {
   });
 
   test('calls outputError when writeFileSync throws', async () => {
-    mockWriteFileSync.mockImplementationOnce(() => { throw new Error('Permission denied'); });
+    mockWriteFileSync.mockImplementationOnce(() => {
+      throw new Error('Permission denied');
+    });
     const errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     const exitSpy = mockExitThrow();
 
     try {
-      const { setupCursor } = await import('../../../src/commands/setup/cursor');
+      const { setupCursor } = await import(
+        '../../../src/commands/setup/cursor'
+      );
       await expectExit1(() => setupCursor({ json: true }));
       const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
       expect(output).toContain('config_write_error');

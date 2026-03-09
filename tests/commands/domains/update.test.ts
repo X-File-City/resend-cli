@@ -1,5 +1,19 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
-import { setNonInteractive, mockExitThrow, captureTestEnv, setupOutputSpies, expectExit1 } from '../../helpers';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  setNonInteractive,
+  setupOutputSpies,
+} from '../../helpers';
 
 const mockUpdate = mock(async () => ({
   data: { object: 'domain', id: 'test-domain-id' },
@@ -40,8 +54,13 @@ describe('domains update command', () => {
   test('calls SDK update with correct id', async () => {
     spies = setupOutputSpies();
 
-    const { updateDomainCommand } = await import('../../../src/commands/domains/update');
-    await updateDomainCommand.parseAsync(['test-domain-id', '--tls', 'enforced'], { from: 'user' });
+    const { updateDomainCommand } = await import(
+      '../../../src/commands/domains/update'
+    );
+    await updateDomainCommand.parseAsync(
+      ['test-domain-id', '--tls', 'enforced'],
+      { from: 'user' },
+    );
 
     expect(mockUpdate).toHaveBeenCalledTimes(1);
     const args = mockUpdate.mock.calls[0][0] as any;
@@ -52,8 +71,13 @@ describe('domains update command', () => {
   test('passes openTracking=true when --open-tracking is set', async () => {
     spies = setupOutputSpies();
 
-    const { updateDomainCommand } = await import('../../../src/commands/domains/update');
-    await updateDomainCommand.parseAsync(['test-domain-id', '--open-tracking'], { from: 'user' });
+    const { updateDomainCommand } = await import(
+      '../../../src/commands/domains/update'
+    );
+    await updateDomainCommand.parseAsync(
+      ['test-domain-id', '--open-tracking'],
+      { from: 'user' },
+    );
 
     const args = mockUpdate.mock.calls[0][0] as any;
     expect(args.openTracking).toBe(true);
@@ -62,8 +86,13 @@ describe('domains update command', () => {
   test('passes openTracking=false when --no-open-tracking is set', async () => {
     spies = setupOutputSpies();
 
-    const { updateDomainCommand } = await import('../../../src/commands/domains/update');
-    await updateDomainCommand.parseAsync(['test-domain-id', '--no-open-tracking'], { from: 'user' });
+    const { updateDomainCommand } = await import(
+      '../../../src/commands/domains/update'
+    );
+    await updateDomainCommand.parseAsync(
+      ['test-domain-id', '--no-open-tracking'],
+      { from: 'user' },
+    );
 
     const args = mockUpdate.mock.calls[0][0] as any;
     expect(args.openTracking).toBe(false);
@@ -72,8 +101,13 @@ describe('domains update command', () => {
   test('does not include tracking keys in payload when no tracking flags are passed', async () => {
     spies = setupOutputSpies();
 
-    const { updateDomainCommand } = await import('../../../src/commands/domains/update');
-    await updateDomainCommand.parseAsync(['test-domain-id', '--tls', 'enforced'], { from: 'user' });
+    const { updateDomainCommand } = await import(
+      '../../../src/commands/domains/update'
+    );
+    await updateDomainCommand.parseAsync(
+      ['test-domain-id', '--tls', 'enforced'],
+      { from: 'user' },
+    );
 
     const args = mockUpdate.mock.calls[0][0] as any;
     expect(args.openTracking).toBeUndefined();
@@ -83,8 +117,13 @@ describe('domains update command', () => {
   test('passes clickTracking=true when --click-tracking is set', async () => {
     spies = setupOutputSpies();
 
-    const { updateDomainCommand } = await import('../../../src/commands/domains/update');
-    await updateDomainCommand.parseAsync(['test-domain-id', '--click-tracking'], { from: 'user' });
+    const { updateDomainCommand } = await import(
+      '../../../src/commands/domains/update'
+    );
+    await updateDomainCommand.parseAsync(
+      ['test-domain-id', '--click-tracking'],
+      { from: 'user' },
+    );
 
     const args = mockUpdate.mock.calls[0][0] as any;
     expect(args.clickTracking).toBe(true);
@@ -93,8 +132,13 @@ describe('domains update command', () => {
   test('passes clickTracking=false when --no-click-tracking is set', async () => {
     spies = setupOutputSpies();
 
-    const { updateDomainCommand } = await import('../../../src/commands/domains/update');
-    await updateDomainCommand.parseAsync(['test-domain-id', '--no-click-tracking'], { from: 'user' });
+    const { updateDomainCommand } = await import(
+      '../../../src/commands/domains/update'
+    );
+    await updateDomainCommand.parseAsync(
+      ['test-domain-id', '--no-click-tracking'],
+      { from: 'user' },
+    );
 
     const args = mockUpdate.mock.calls[0][0] as any;
     expect(args.clickTracking).toBe(false);
@@ -105,8 +149,12 @@ describe('domains update command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateDomainCommand } = await import('../../../src/commands/domains/update');
-    await expectExit1(() => updateDomainCommand.parseAsync(['test-domain-id'], { from: 'user' }));
+    const { updateDomainCommand } = await import(
+      '../../../src/commands/domains/update'
+    );
+    await expectExit1(() =>
+      updateDomainCommand.parseAsync(['test-domain-id'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('no_changes');
@@ -116,8 +164,13 @@ describe('domains update command', () => {
   test('outputs domain JSON on success', async () => {
     spies = setupOutputSpies();
 
-    const { updateDomainCommand } = await import('../../../src/commands/domains/update');
-    await updateDomainCommand.parseAsync(['test-domain-id', '--tls', 'opportunistic'], { from: 'user' });
+    const { updateDomainCommand } = await import(
+      '../../../src/commands/domains/update'
+    );
+    await updateDomainCommand.parseAsync(
+      ['test-domain-id', '--tls', 'opportunistic'],
+      { from: 'user' },
+    );
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
@@ -132,8 +185,14 @@ describe('domains update command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { updateDomainCommand } = await import('../../../src/commands/domains/update');
-    await expectExit1(() => updateDomainCommand.parseAsync(['test-domain-id', '--tls', 'enforced'], { from: 'user' }));
+    const { updateDomainCommand } = await import(
+      '../../../src/commands/domains/update'
+    );
+    await expectExit1(() =>
+      updateDomainCommand.parseAsync(['test-domain-id', '--tls', 'enforced'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -141,13 +200,22 @@ describe('domains update command', () => {
 
   test('errors with update_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockUpdate.mockResolvedValueOnce({ data: null, error: { message: 'Domain not found', name: 'not_found' } } as any);
+    mockUpdate.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'Domain not found', name: 'not_found' },
+    } as any);
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { updateDomainCommand } = await import('../../../src/commands/domains/update');
-    await expectExit1(() => updateDomainCommand.parseAsync(['test-domain-id', '--tls', 'enforced'], { from: 'user' }));
+    const { updateDomainCommand } = await import(
+      '../../../src/commands/domains/update'
+    );
+    await expectExit1(() =>
+      updateDomainCommand.parseAsync(['test-domain-id', '--tls', 'enforced'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('update_error');

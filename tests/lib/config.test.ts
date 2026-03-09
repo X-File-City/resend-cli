@@ -1,9 +1,9 @@
-import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { mkdirSync, readFileSync, rmSync, statSync } from 'node:fs';
-import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { captureTestEnv } from '../helpers';
+import { join } from 'node:path';
 import { getConfigDir, resolveApiKey, storeApiKey } from '../../src/lib/config';
+import { captureTestEnv } from '../helpers';
 
 describe('getConfigDir', () => {
   const restoreEnv = captureTestEnv();
@@ -29,7 +29,10 @@ describe('resolveApiKey', () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = join(tmpdir(), `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    tmpDir = join(
+      tmpdir(),
+      `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
     mkdirSync(tmpDir, { recursive: true });
   });
 
@@ -56,7 +59,10 @@ describe('resolveApiKey', () => {
     process.env.XDG_CONFIG_HOME = tmpDir;
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
-    Bun.write(join(configDir, 'credentials.json'), JSON.stringify({ api_key: 're_config_key' }));
+    Bun.write(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({ api_key: 're_config_key' }),
+    );
 
     const result = resolveApiKey();
     expect(result).toEqual({ key: 're_config_key', source: 'config' });
@@ -85,7 +91,10 @@ describe('resolveApiKey', () => {
     process.env.XDG_CONFIG_HOME = tmpDir;
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
-    Bun.write(join(configDir, 'credentials.json'), JSON.stringify({ api_key: '' }));
+    Bun.write(
+      join(configDir, 'credentials.json'),
+      JSON.stringify({ api_key: '' }),
+    );
 
     const result = resolveApiKey();
     expect(result).toBeNull();
@@ -97,7 +106,10 @@ describe('storeApiKey', () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = join(tmpdir(), `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    tmpDir = join(
+      tmpdir(),
+      `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
     process.env.XDG_CONFIG_HOME = tmpDir;
   });
 

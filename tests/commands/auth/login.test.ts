@@ -1,8 +1,21 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
 import { mkdirSync, readFileSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { captureTestEnv, setupOutputSpies, expectExit1, mockExitThrow } from '../../helpers';
+import { join } from 'node:path';
+import {
+  captureTestEnv,
+  expectExit1,
+  mockExitThrow,
+  setupOutputSpies,
+} from '../../helpers';
 
 // Mock the Resend SDK
 mock.module('resend', () => ({
@@ -22,7 +35,10 @@ describe('login command', () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = join(tmpdir(), `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    tmpDir = join(
+      tmpdir(),
+      `resend-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
     mkdirSync(tmpDir, { recursive: true });
     process.env.XDG_CONFIG_HOME = tmpDir;
   });
@@ -43,14 +59,18 @@ describe('login command', () => {
     exitSpy = mockExitThrow();
 
     const { loginCommand } = await import('../../../src/commands/auth/login');
-    await expectExit1(() => loginCommand.parseAsync(['--key', 'bad_key'], { from: 'user' }));
+    await expectExit1(() =>
+      loginCommand.parseAsync(['--key', 'bad_key'], { from: 'user' }),
+    );
   });
 
   test('stores valid key to credentials.json', async () => {
     spies = setupOutputSpies();
 
     const { loginCommand } = await import('../../../src/commands/auth/login');
-    await loginCommand.parseAsync(['--key', 're_valid_test_key_123'], { from: 'user' });
+    await loginCommand.parseAsync(['--key', 're_valid_test_key_123'], {
+      from: 'user',
+    });
 
     const configPath = join(tmpDir, 'resend', 'credentials.json');
     const data = JSON.parse(readFileSync(configPath, 'utf-8'));

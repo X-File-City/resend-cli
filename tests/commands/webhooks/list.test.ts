@@ -1,10 +1,18 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
 import {
-  setNonInteractive,
-  mockExitThrow,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
   captureTestEnv,
-  setupOutputSpies,
   expectExit1,
+  mockExitThrow,
+  setNonInteractive,
+  setupOutputSpies,
 } from '../../helpers';
 
 const mockList = mock(async () => ({
@@ -58,7 +66,9 @@ describe('webhooks list command', () => {
   test('calls SDK list method with default pagination', async () => {
     spies = setupOutputSpies();
 
-    const { listWebhooksCommand } = await import('../../../src/commands/webhooks/list');
+    const { listWebhooksCommand } = await import(
+      '../../../src/commands/webhooks/list'
+    );
     await listWebhooksCommand.parseAsync([], { from: 'user' });
 
     expect(mockList).toHaveBeenCalledTimes(1);
@@ -69,7 +79,9 @@ describe('webhooks list command', () => {
   test('passes --limit to pagination options', async () => {
     spies = setupOutputSpies();
 
-    const { listWebhooksCommand } = await import('../../../src/commands/webhooks/list');
+    const { listWebhooksCommand } = await import(
+      '../../../src/commands/webhooks/list'
+    );
     await listWebhooksCommand.parseAsync(['--limit', '5'], { from: 'user' });
 
     const args = mockList.mock.calls[0][0] as any;
@@ -79,8 +91,12 @@ describe('webhooks list command', () => {
   test('passes --after cursor to pagination options', async () => {
     spies = setupOutputSpies();
 
-    const { listWebhooksCommand } = await import('../../../src/commands/webhooks/list');
-    await listWebhooksCommand.parseAsync(['--after', 'wh_cursor123'], { from: 'user' });
+    const { listWebhooksCommand } = await import(
+      '../../../src/commands/webhooks/list'
+    );
+    await listWebhooksCommand.parseAsync(['--after', 'wh_cursor123'], {
+      from: 'user',
+    });
 
     const args = mockList.mock.calls[0][0] as any;
     expect(args.after).toBe('wh_cursor123');
@@ -89,14 +105,18 @@ describe('webhooks list command', () => {
   test('outputs JSON list with webhook data when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { listWebhooksCommand } = await import('../../../src/commands/webhooks/list');
+    const { listWebhooksCommand } = await import(
+      '../../../src/commands/webhooks/list'
+    );
     await listWebhooksCommand.parseAsync([], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
     expect(Array.isArray(parsed.data)).toBe(true);
     expect(parsed.data[0].id).toBe('wh_abc123');
-    expect(parsed.data[0].endpoint).toBe('https://app.example.com/hooks/resend');
+    expect(parsed.data[0].endpoint).toBe(
+      'https://app.example.com/hooks/resend',
+    );
     expect(parsed.has_more).toBe(false);
   });
 
@@ -105,8 +125,12 @@ describe('webhooks list command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listWebhooksCommand } = await import('../../../src/commands/webhooks/list');
-    await expectExit1(() => listWebhooksCommand.parseAsync(['--limit', '200'], { from: 'user' }));
+    const { listWebhooksCommand } = await import(
+      '../../../src/commands/webhooks/list'
+    );
+    await expectExit1(() =>
+      listWebhooksCommand.parseAsync(['--limit', '200'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('invalid_limit');
@@ -119,8 +143,12 @@ describe('webhooks list command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listWebhooksCommand } = await import('../../../src/commands/webhooks/list');
-    await expectExit1(() => listWebhooksCommand.parseAsync([], { from: 'user' }));
+    const { listWebhooksCommand } = await import(
+      '../../../src/commands/webhooks/list'
+    );
+    await expectExit1(() =>
+      listWebhooksCommand.parseAsync([], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -128,13 +156,20 @@ describe('webhooks list command', () => {
 
   test('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockList.mockResolvedValueOnce({ data: null, error: { message: 'Server error', name: 'server_error' } } as any);
+    mockList.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'Server error', name: 'server_error' },
+    } as any);
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { listWebhooksCommand } = await import('../../../src/commands/webhooks/list');
-    await expectExit1(() => listWebhooksCommand.parseAsync([], { from: 'user' }));
+    const { listWebhooksCommand } = await import(
+      '../../../src/commands/webhooks/list'
+    );
+    await expectExit1(() =>
+      listWebhooksCommand.parseAsync([], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('list_error');

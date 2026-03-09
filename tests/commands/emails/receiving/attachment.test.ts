@@ -1,10 +1,18 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
 import {
-  setNonInteractive,
-  mockExitThrow,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
   captureTestEnv,
-  setupOutputSpies,
   expectExit1,
+  mockExitThrow,
+  setNonInteractive,
+  setupOutputSpies,
 } from '../../../helpers';
 
 const mockGet = mock(async () => ({
@@ -56,8 +64,12 @@ describe('emails receiving attachment command', () => {
   test('calls SDK get with emailId and attachmentId', async () => {
     spies = setupOutputSpies();
 
-    const { getAttachmentCommand } = await import('../../../../src/commands/emails/receiving/attachment');
-    await getAttachmentCommand.parseAsync(['rcv_email123', 'attach_abc123'], { from: 'user' });
+    const { getAttachmentCommand } = await import(
+      '../../../../src/commands/emails/receiving/attachment'
+    );
+    await getAttachmentCommand.parseAsync(['rcv_email123', 'attach_abc123'], {
+      from: 'user',
+    });
 
     expect(mockGet).toHaveBeenCalledTimes(1);
     const args = mockGet.mock.calls[0][0] as any;
@@ -68,15 +80,21 @@ describe('emails receiving attachment command', () => {
   test('outputs JSON with attachment fields when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { getAttachmentCommand } = await import('../../../../src/commands/emails/receiving/attachment');
-    await getAttachmentCommand.parseAsync(['rcv_email123', 'attach_abc123'], { from: 'user' });
+    const { getAttachmentCommand } = await import(
+      '../../../../src/commands/emails/receiving/attachment'
+    );
+    await getAttachmentCommand.parseAsync(['rcv_email123', 'attach_abc123'], {
+      from: 'user',
+    });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
     expect(parsed.id).toBe('attach_abc123');
     expect(parsed.filename).toBe('invoice.pdf');
     expect(parsed.content_type).toBe('application/pdf');
-    expect(parsed.download_url).toBe('https://storage.example.com/signed/invoice.pdf');
+    expect(parsed.download_url).toBe(
+      'https://storage.example.com/signed/invoice.pdf',
+    );
   });
 
   test('errors with auth_error when no API key', async () => {
@@ -86,8 +104,14 @@ describe('emails receiving attachment command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { getAttachmentCommand } = await import('../../../../src/commands/emails/receiving/attachment');
-    await expectExit1(() => getAttachmentCommand.parseAsync(['rcv_email123', 'attach_abc123'], { from: 'user' }));
+    const { getAttachmentCommand } = await import(
+      '../../../../src/commands/emails/receiving/attachment'
+    );
+    await expectExit1(() =>
+      getAttachmentCommand.parseAsync(['rcv_email123', 'attach_abc123'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -95,13 +119,22 @@ describe('emails receiving attachment command', () => {
 
   test('errors with fetch_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockGet.mockResolvedValueOnce({ data: null, error: { message: 'Not found', name: 'not_found' } } as any);
+    mockGet.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'Not found', name: 'not_found' },
+    } as any);
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { getAttachmentCommand } = await import('../../../../src/commands/emails/receiving/attachment');
-    await expectExit1(() => getAttachmentCommand.parseAsync(['rcv_email123', 'attach_nonexistent'], { from: 'user' }));
+    const { getAttachmentCommand } = await import(
+      '../../../../src/commands/emails/receiving/attachment'
+    );
+    await expectExit1(() =>
+      getAttachmentCommand.parseAsync(['rcv_email123', 'attach_nonexistent'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('fetch_error');

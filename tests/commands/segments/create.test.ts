@@ -1,14 +1,26 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
 import {
-  setNonInteractive,
-  mockExitThrow,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
   captureTestEnv,
-  setupOutputSpies,
   expectExit1,
+  mockExitThrow,
+  setNonInteractive,
+  setupOutputSpies,
 } from '../../helpers';
 
 const mockCreate = mock(async () => ({
-  data: { object: 'segment' as const, id: 'seg_abc123', name: 'Newsletter Subscribers' },
+  data: {
+    object: 'segment' as const,
+    id: 'seg_abc123',
+    name: 'Newsletter Subscribers',
+  },
   error: null,
 }));
 
@@ -46,8 +58,13 @@ describe('segments create command', () => {
   test('creates segment with --name flag', async () => {
     spies = setupOutputSpies();
 
-    const { createSegmentCommand } = await import('../../../src/commands/segments/create');
-    await createSegmentCommand.parseAsync(['--name', 'Newsletter Subscribers'], { from: 'user' });
+    const { createSegmentCommand } = await import(
+      '../../../src/commands/segments/create'
+    );
+    await createSegmentCommand.parseAsync(
+      ['--name', 'Newsletter Subscribers'],
+      { from: 'user' },
+    );
 
     expect(mockCreate).toHaveBeenCalledTimes(1);
     const args = mockCreate.mock.calls[0][0] as any;
@@ -57,8 +74,13 @@ describe('segments create command', () => {
   test('outputs JSON with id and object when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { createSegmentCommand } = await import('../../../src/commands/segments/create');
-    await createSegmentCommand.parseAsync(['--name', 'Newsletter Subscribers'], { from: 'user' });
+    const { createSegmentCommand } = await import(
+      '../../../src/commands/segments/create'
+    );
+    await createSegmentCommand.parseAsync(
+      ['--name', 'Newsletter Subscribers'],
+      { from: 'user' },
+    );
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
@@ -72,8 +94,12 @@ describe('segments create command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createSegmentCommand } = await import('../../../src/commands/segments/create');
-    await expectExit1(() => createSegmentCommand.parseAsync([], { from: 'user' }));
+    const { createSegmentCommand } = await import(
+      '../../../src/commands/segments/create'
+    );
+    await expectExit1(() =>
+      createSegmentCommand.parseAsync([], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('missing_name');
@@ -84,8 +110,12 @@ describe('segments create command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createSegmentCommand } = await import('../../../src/commands/segments/create');
-    await expectExit1(() => createSegmentCommand.parseAsync([], { from: 'user' }));
+    const { createSegmentCommand } = await import(
+      '../../../src/commands/segments/create'
+    );
+    await expectExit1(() =>
+      createSegmentCommand.parseAsync([], { from: 'user' }),
+    );
 
     expect(mockCreate).not.toHaveBeenCalled();
   });
@@ -97,8 +127,12 @@ describe('segments create command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { createSegmentCommand } = await import('../../../src/commands/segments/create');
-    await expectExit1(() => createSegmentCommand.parseAsync(['--name', 'Test'], { from: 'user' }));
+    const { createSegmentCommand } = await import(
+      '../../../src/commands/segments/create'
+    );
+    await expectExit1(() =>
+      createSegmentCommand.parseAsync(['--name', 'Test'], { from: 'user' }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('auth_error');
@@ -106,13 +140,22 @@ describe('segments create command', () => {
 
   test('errors with create_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockCreate.mockResolvedValueOnce({ data: null, error: { message: 'Segment already exists', name: 'validation_error' } } as any);
+    mockCreate.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'Segment already exists', name: 'validation_error' },
+    } as any);
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { createSegmentCommand } = await import('../../../src/commands/segments/create');
-    await expectExit1(() => createSegmentCommand.parseAsync(['--name', 'Newsletter Subscribers'], { from: 'user' }));
+    const { createSegmentCommand } = await import(
+      '../../../src/commands/segments/create'
+    );
+    await expectExit1(() =>
+      createSegmentCommand.parseAsync(['--name', 'Newsletter Subscribers'], {
+        from: 'user',
+      }),
+    );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
     expect(output).toContain('create_error');

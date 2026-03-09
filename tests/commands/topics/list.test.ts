@@ -1,10 +1,18 @@
-import { describe, test, expect, spyOn, afterEach, mock, beforeEach } from 'bun:test';
 import {
-  setNonInteractive,
-  mockExitThrow,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
+import {
   captureTestEnv,
-  setupOutputSpies,
   expectExit1,
+  mockExitThrow,
+  setNonInteractive,
+  setupOutputSpies,
 } from '../../helpers';
 
 const mockList = mock(async () => ({
@@ -56,7 +64,9 @@ describe('topics list command', () => {
   test('calls SDK list method', async () => {
     spies = setupOutputSpies();
 
-    const { listTopicsCommand } = await import('../../../src/commands/topics/list');
+    const { listTopicsCommand } = await import(
+      '../../../src/commands/topics/list'
+    );
     await listTopicsCommand.parseAsync([], { from: 'user' });
 
     expect(mockList).toHaveBeenCalledTimes(1);
@@ -65,7 +75,9 @@ describe('topics list command', () => {
   test('outputs JSON list when non-interactive', async () => {
     spies = setupOutputSpies();
 
-    const { listTopicsCommand } = await import('../../../src/commands/topics/list');
+    const { listTopicsCommand } = await import(
+      '../../../src/commands/topics/list'
+    );
     await listTopicsCommand.parseAsync([], { from: 'user' });
 
     const output = spies.logSpy.mock.calls[0][0] as string;
@@ -82,7 +94,9 @@ describe('topics list command', () => {
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
-    const { listTopicsCommand } = await import('../../../src/commands/topics/list');
+    const { listTopicsCommand } = await import(
+      '../../../src/commands/topics/list'
+    );
     await expectExit1(() => listTopicsCommand.parseAsync([], { from: 'user' }));
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -91,12 +105,17 @@ describe('topics list command', () => {
 
   test('errors with list_error when SDK returns an error', async () => {
     setNonInteractive();
-    mockList.mockResolvedValueOnce({ data: null, error: { message: 'Server error', name: 'server_error' } } as any);
+    mockList.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'Server error', name: 'server_error' },
+    } as any);
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
     exitSpy = mockExitThrow();
 
-    const { listTopicsCommand } = await import('../../../src/commands/topics/list');
+    const { listTopicsCommand } = await import(
+      '../../../src/commands/topics/list'
+    );
     await expectExit1(() => listTopicsCommand.parseAsync([], { from: 'user' }));
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');

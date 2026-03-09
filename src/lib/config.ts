@@ -1,6 +1,12 @@
-import { chmodSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import {
+  chmodSync,
+  mkdirSync,
+  readFileSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { homedir } from 'node:os';
+import { join } from 'node:path';
 
 export type ApiKeySource = 'flag' | 'env' | 'config';
 export type ResolvedKey = { key: string; source: ApiKeySource };
@@ -43,9 +49,13 @@ export function storeApiKey(apiKey: string): string {
   mkdirSync(configDir, { recursive: true, mode: 0o700 });
 
   const configPath = join(configDir, 'credentials.json');
-  writeFileSync(configPath, JSON.stringify({ api_key: apiKey }, null, 2) + '\n', {
-    mode: 0o600,
-  });
+  writeFileSync(
+    configPath,
+    `${JSON.stringify({ api_key: apiKey }, null, 2)}\n`,
+    {
+      mode: 0o600,
+    },
+  );
   chmodSync(configPath, 0o600);
 
   return configPath;
