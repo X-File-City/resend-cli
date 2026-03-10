@@ -3,10 +3,11 @@ import {
   beforeEach,
   describe,
   expect,
-  mock,
   spyOn,
   test,
 } from 'bun:test';
+import * as childProcess from 'node:child_process';
+import * as fs from 'node:fs';
 import {
   captureTestEnv,
   expectExit1,
@@ -14,40 +15,34 @@ import {
   setupOutputSpies,
 } from '../../helpers';
 
-const mockExecFileSync = mock(() => {});
-mock.module('node:child_process', () => ({ execFileSync: mockExecFileSync }));
-
-const mockWriteFileSync = mock(() => {});
-const mockMkdirSync = mock(() => {});
-const mockReadFileSync = mock(() => '{}');
-const mockExistsSync = mock(() => false);
-const mockReaddirSync = mock(() => []);
-const mockLstatSync = mock(() => ({ isDirectory: () => false }));
-mock.module('node:fs', () => ({
-  existsSync: mockExistsSync,
-  readFileSync: mockReadFileSync,
-  writeFileSync: mockWriteFileSync,
-  mkdirSync: mockMkdirSync,
-  readdirSync: mockReaddirSync,
-  lstatSync: mockLstatSync,
-  unlinkSync: mock(() => {}),
-  chmodSync: mock(() => {}),
-}));
-
 describe('setupClaudeCode', () => {
   const restoreEnv = captureTestEnv();
+  let execFileSyncSpy: ReturnType<typeof spyOn>;
+  let existsSyncSpy: ReturnType<typeof spyOn>;
+  let readFileSyncSpy: ReturnType<typeof spyOn>;
+  let writeFileSyncSpy: ReturnType<typeof spyOn>;
+  let mkdirSyncSpy: ReturnType<typeof spyOn>;
 
   beforeEach(() => {
-    mockExecFileSync.mockClear();
-    mockWriteFileSync.mockClear();
-    mockReadFileSync.mockClear();
-    mockExistsSync.mockClear();
-    mockMkdirSync.mockClear();
+    execFileSyncSpy = spyOn(childProcess, 'execFileSync').mockImplementation(
+      () => Buffer.from(''),
+    );
+    existsSyncSpy = spyOn(fs, 'existsSync').mockReturnValue(false);
+    readFileSyncSpy = spyOn(fs, 'readFileSync').mockReturnValue('{}');
+    writeFileSyncSpy = spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+    mkdirSyncSpy = spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
     // Remove env key so resolveApiKey returns null → no -e flag in args
     delete process.env.RESEND_API_KEY;
   });
 
-  afterEach(() => restoreEnv());
+  afterEach(() => {
+    restoreEnv();
+    execFileSyncSpy.mockRestore();
+    existsSyncSpy.mockRestore();
+    readFileSyncSpy.mockRestore();
+    writeFileSyncSpy.mockRestore();
+    mkdirSyncSpy.mockRestore();
+  });
 
   test('calls claude mcp add with correct args on success', async () => {
     const { restore } = setupOutputSpies();
@@ -57,7 +52,7 @@ describe('setupClaudeCode', () => {
       );
       await setupClaudeCode({ json: true });
 
-      expect(mockExecFileSync).toHaveBeenCalledWith(
+      expect(execFileSyncSpy).toHaveBeenCalledWith(
         'claude',
         ['mcp', 'add', 'resend', '--', 'npx', '-y', 'resend-mcp'],
         { stdio: 'inherit' },
@@ -86,7 +81,7 @@ describe('setupClaudeCode', () => {
 
   test('falls back to writing ~/.claude.json when claude binary not found (ENOENT)', async () => {
     const notFoundErr = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
-    mockExecFileSync.mockImplementationOnce(() => {
+    execFileSyncSpy.mockImplementationOnce(() => {
       throw notFoundErr;
     });
     const { logSpy, restore } = setupOutputSpies();
@@ -96,7 +91,7 @@ describe('setupClaudeCode', () => {
       );
       await setupClaudeCode({ json: true });
 
-      expect(mockWriteFileSync).toHaveBeenCalled();
+      expect(writeFileSyncSpy).toHaveBeenCalled();
       const output = JSON.parse(logSpy.mock.calls[0][0] as string);
       expect(output.method).toBe('direct_write');
       expect(output.config_path).toContain('.claude.json');
@@ -110,7 +105,7 @@ describe('setupClaudeCode', () => {
       code: 1,
       status: 1,
     });
-    mockExecFileSync.mockImplementationOnce(() => {
+    execFileSyncSpy.mockImplementationOnce(() => {
       throw spawnErr;
     });
     const errorSpy = spyOn(console, 'error').mockImplementation(() => {});

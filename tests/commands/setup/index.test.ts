@@ -1,28 +1,10 @@
-import { afterEach, describe, expect, mock, spyOn, test } from 'bun:test';
+import { afterEach, describe, expect, spyOn, test } from 'bun:test';
 import {
   captureTestEnv,
   expectExit1,
   mockExitThrow,
   setNonInteractive,
 } from '../../helpers';
-
-// Provide a complete node:fs mock so @clack/prompts (which imports readdirSync
-// and lstatSync) does not fail when this file runs after another test file that
-// only partially mocked node:fs.
-mock.module('node:fs', () => ({
-  existsSync: mock(() => false),
-  readFileSync: mock(() => '{}'),
-  writeFileSync: mock(() => {}),
-  mkdirSync: mock(() => {}),
-  readdirSync: mock(() => []),
-  lstatSync: mock(() => ({ isDirectory: () => false })),
-  unlinkSync: mock(() => {}),
-  chmodSync: mock(() => {}),
-}));
-
-// No mock.module for subcommand modules — the real source files are used.
-// The tests here only exercise the parent command's non-interactive guard and
-// subcommand registration; no subcommand action function is invoked.
 
 describe('setup index — non-interactive guard', () => {
   const restoreEnv = captureTestEnv();

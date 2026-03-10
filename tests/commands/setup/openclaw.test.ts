@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, mock, spyOn, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
+import * as fs from 'node:fs';
 import {
   captureTestEnv,
   expectExit1,
@@ -6,25 +7,20 @@ import {
   setupOutputSpies,
 } from '../../helpers';
 
-const mockWriteFileSync = mock(() => {});
-const mockMkdirSync = mock(() => {});
-const mockReaddirSync = mock(() => []);
-const mockLstatSync = mock(() => ({ isDirectory: () => false }));
-mock.module('node:fs', () => ({
-  mkdirSync: mockMkdirSync,
-  writeFileSync: mockWriteFileSync,
-  existsSync: mock(() => false),
-  readFileSync: mock(() => '{}'),
-  readdirSync: mockReaddirSync,
-  lstatSync: mockLstatSync,
-}));
-
 describe('setupOpenclaw', () => {
   const restoreEnv = captureTestEnv();
+  let writeFileSyncSpy: ReturnType<typeof spyOn>;
+  let mkdirSyncSpy: ReturnType<typeof spyOn>;
+
+  beforeEach(() => {
+    writeFileSyncSpy = spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+    mkdirSyncSpy = spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
+  });
+
   afterEach(() => {
     restoreEnv();
-    mockWriteFileSync.mockClear();
-    mockMkdirSync.mockClear();
+    writeFileSyncSpy.mockRestore();
+    mkdirSyncSpy.mockRestore();
   });
 
   test('writes skill file to ~/.openclaw/skills/resend/SKILL.md', async () => {
@@ -35,11 +31,11 @@ describe('setupOpenclaw', () => {
       );
       await setupOpenclaw({ json: true });
 
-      expect(mockMkdirSync).toHaveBeenCalledWith(
+      expect(mkdirSyncSpy).toHaveBeenCalledWith(
         expect.stringContaining('.openclaw/skills/resend'),
         { recursive: true },
       );
-      expect(mockWriteFileSync).toHaveBeenCalledWith(
+      expect(writeFileSyncSpy).toHaveBeenCalledWith(
         expect.stringContaining('SKILL.md'),
         expect.stringContaining('# Resend CLI'),
         'utf8',
@@ -57,7 +53,7 @@ describe('setupOpenclaw', () => {
       );
       await setupOpenclaw({ json: true });
 
-      const content = mockWriteFileSync.mock.calls[0][1] as string;
+      const content = writeFileSyncSpy.mock.calls[0][1] as string;
       expect(content).toContain('name: resend');
       expect(content).toContain('RESEND_API_KEY');
       expect(content).toContain('resend emails send');
@@ -85,7 +81,7 @@ describe('setupOpenclaw', () => {
   });
 
   test('calls outputError with config_write_error on write failure', async () => {
-    mockWriteFileSync.mockImplementationOnce(() => {
+    writeFileSyncSpy.mockImplementationOnce(() => {
       throw new Error('EACCES');
     });
     const errorSpy = spyOn(console, 'error').mockImplementation(() => {});

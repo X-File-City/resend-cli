@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from 'bun:test';
+import * as fs from 'node:fs';
 import type { InstallTarget } from '../../../src/commands/skills/install';
 import {
   captureTestEnv,
@@ -6,20 +7,6 @@ import {
   mockExitThrow,
   setupOutputSpies,
 } from '../../helpers';
-
-const mockWriteFileSync = mock(() => {});
-const mockMkdirSync = mock(() => {});
-
-mock.module('node:fs', () => ({
-  mkdirSync: mockMkdirSync,
-  writeFileSync: mockWriteFileSync,
-  existsSync: mock(() => false),
-  readFileSync: mock(() => '{}'),
-  readdirSync: mock(() => []),
-  lstatSync: mock(() => ({ isDirectory: () => false })),
-  unlinkSync: mock(() => {}),
-  chmodSync: mock(() => {}),
-}));
 
 const MOCK_TREE = {
   tree: [
@@ -64,11 +51,18 @@ function makeMockFetch(treeData = MOCK_TREE, fileContent = '# skill content') {
 describe('installSkills', () => {
   const restoreEnv = captureTestEnv();
   const originalFetch = globalThis.fetch;
+  let writeFileSyncSpy: ReturnType<typeof spyOn>;
+  let mkdirSyncSpy: ReturnType<typeof spyOn>;
+
+  beforeEach(() => {
+    writeFileSyncSpy = spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+    mkdirSyncSpy = spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
+  });
 
   afterEach(() => {
     restoreEnv();
-    mockWriteFileSync.mockClear();
-    mockMkdirSync.mockClear();
+    writeFileSyncSpy.mockRestore();
+    mkdirSyncSpy.mockRestore();
     globalThis.fetch = originalFetch;
   });
 
@@ -82,7 +76,7 @@ describe('installSkills', () => {
       await installSkills(SINGLE_TARGET, { json: true });
 
       // 12 items in tree, 5 excluded → 7 actual files
-      expect(mockWriteFileSync).toHaveBeenCalledTimes(7);
+      expect(writeFileSyncSpy).toHaveBeenCalledTimes(7);
 
       const output = JSON.parse(logSpy.mock.calls[0][0] as string);
       expect(output.installed).toEqual([
@@ -115,7 +109,7 @@ describe('installSkills', () => {
       await installSkills(multiTargets, { json: true });
 
       // 7 files × 2 targets
-      expect(mockWriteFileSync).toHaveBeenCalledTimes(14);
+      expect(writeFileSyncSpy).toHaveBeenCalledTimes(14);
     } finally {
       restore();
     }
@@ -130,7 +124,7 @@ describe('installSkills', () => {
       );
       await installSkills(SINGLE_TARGET, { json: true });
 
-      const writtenPaths = mockWriteFileSync.mock.calls.map(
+      const writtenPaths = writeFileSyncSpy.mock.calls.map(
         (c) => c[0] as string,
       );
       expect(writtenPaths.some((p) => p.includes('resend/SKILL.md'))).toBe(
@@ -156,7 +150,7 @@ describe('installSkills', () => {
       );
       await installSkills(SINGLE_TARGET, { json: true });
 
-      const mkdirCalls = mockMkdirSync.mock.calls.map((c) => c[0] as string);
+      const mkdirCalls = mkdirSyncSpy.mock.calls.map((c) => c[0] as string);
       expect(mkdirCalls.some((p) => p.includes('send-email'))).toBe(true);
       expect(mkdirCalls.some((p) => p.includes('resend-inbound'))).toBe(true);
     } finally {
@@ -222,7 +216,7 @@ describe('installSkills', () => {
 
   test('exits with write_error when file write fails', async () => {
     globalThis.fetch = makeMockFetch();
-    mockWriteFileSync.mockImplementationOnce(() => {
+    writeFileSyncSpy.mockImplementationOnce(() => {
       throw new Error('ENOENT: no such file or directory');
     });
     const { restore } = setupOutputSpies();

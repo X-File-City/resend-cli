@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, mock, spyOn, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
+import * as fs from 'node:fs';
 import {
   captureTestEnv,
   expectExit1,
@@ -6,34 +7,28 @@ import {
   setupOutputSpies,
 } from '../../helpers';
 
-const mockWriteFileSync = mock(() => {});
-const mockMkdirSync = mock(() => {});
-const mockReadFileSync = mock(() =>
-  JSON.stringify({ mcpServers: { other: { command: 'other' } } }),
-);
-const mockExistsSync = mock(() => true);
-const mockReaddirSync = mock(() => []);
-const mockLstatSync = mock(() => ({ isDirectory: () => false }));
-
-mock.module('node:fs', () => ({
-  existsSync: mockExistsSync,
-  readFileSync: mockReadFileSync,
-  writeFileSync: mockWriteFileSync,
-  mkdirSync: mockMkdirSync,
-  readdirSync: mockReaddirSync,
-  lstatSync: mockLstatSync,
-  unlinkSync: mock(() => {}),
-  chmodSync: mock(() => {}),
-}));
-
 describe('setupCursor', () => {
   const restoreEnv = captureTestEnv();
+  let existsSyncSpy: ReturnType<typeof spyOn>;
+  let readFileSyncSpy: ReturnType<typeof spyOn>;
+  let writeFileSyncSpy: ReturnType<typeof spyOn>;
+  let mkdirSyncSpy: ReturnType<typeof spyOn>;
+
+  beforeEach(() => {
+    existsSyncSpy = spyOn(fs, 'existsSync').mockReturnValue(true);
+    readFileSyncSpy = spyOn(fs, 'readFileSync').mockReturnValue(
+      JSON.stringify({ mcpServers: { other: { command: 'other' } } }),
+    );
+    writeFileSyncSpy = spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+    mkdirSyncSpy = spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
+  });
+
   afterEach(() => {
     restoreEnv();
-    mockWriteFileSync.mockClear();
-    mockReadFileSync.mockClear();
-    mockExistsSync.mockClear();
-    mockMkdirSync.mockClear();
+    existsSyncSpy.mockRestore();
+    readFileSyncSpy.mockRestore();
+    writeFileSyncSpy.mockRestore();
+    mkdirSyncSpy.mockRestore();
   });
 
   test('merges resend into existing mcpServers without clobbering other entries', async () => {
@@ -44,7 +39,7 @@ describe('setupCursor', () => {
       );
       await setupCursor({ json: true });
 
-      const written = JSON.parse(mockWriteFileSync.mock.calls[0][1] as string);
+      const written = JSON.parse(writeFileSyncSpy.mock.calls[0][1] as string);
       expect(written.mcpServers.other).toBeDefined();
       expect(written.mcpServers.resend.command).toBe('npx');
       expect(written.mcpServers.resend.args).toEqual(['-y', 'resend-mcp']);
@@ -57,7 +52,7 @@ describe('setupCursor', () => {
   });
 
   test('creates config from scratch when file does not exist', async () => {
-    mockExistsSync.mockReturnValueOnce(false);
+    existsSyncSpy.mockReturnValueOnce(false);
     const { restore } = setupOutputSpies();
     try {
       const { setupCursor } = await import(
@@ -65,7 +60,7 @@ describe('setupCursor', () => {
       );
       await setupCursor({ json: true });
 
-      const written = JSON.parse(mockWriteFileSync.mock.calls[0][1] as string);
+      const written = JSON.parse(writeFileSyncSpy.mock.calls[0][1] as string);
       expect(written.mcpServers.resend.command).toBe('npx');
       expect(written.mcpServers.resend.args).toEqual(['-y', 'resend-mcp']);
     } finally {
@@ -91,7 +86,7 @@ describe('setupCursor', () => {
   });
 
   test('calls outputError when writeFileSync throws', async () => {
-    mockWriteFileSync.mockImplementationOnce(() => {
+    writeFileSyncSpy.mockImplementationOnce(() => {
       throw new Error('Permission denied');
     });
     const errorSpy = spyOn(console, 'error').mockImplementation(() => {});
