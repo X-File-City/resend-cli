@@ -12,8 +12,10 @@ import { emailsCommand } from './commands/emails/index';
 import { segmentsCommand } from './commands/segments/index';
 import { setupCommand } from './commands/setup/index';
 import { skillsCommand } from './commands/skills/index';
+import { teamsCommand } from './commands/teams/index';
 import { topicsCommand } from './commands/topics/index';
 import { webhooksCommand } from './commands/webhooks/index';
+import { whoamiCommand } from './commands/whoami';
 import { PACKAGE_NAME, VERSION } from './lib/version';
 
 const program = new Command()
@@ -25,6 +27,7 @@ const program = new Command()
     'Output the current version',
   )
   .option('--api-key <key>', 'Resend API key (overrides env/config)')
+  .option('--team <name>', 'Team profile to use (overrides RESEND_TEAM)')
   .option('--json', 'Force JSON output')
   .configureHelp({ showGlobalOptions: true })
   .addHelpText(
@@ -33,6 +36,8 @@ const program = new Command()
 Environment:
   RESEND_API_KEY    API key — checked after --api-key, before stored credentials
                     Priority: --api-key flag > RESEND_API_KEY > ~/.config/resend/credentials.json
+  RESEND_TEAM       Team profile — checked after --team flag, before active_team in config
+                    Priority: --team flag > RESEND_TEAM > active_team in config > "default"
 
 Output:
   Human-readable by default. Pass --json or pipe stdout for machine-readable JSON.
@@ -57,6 +62,8 @@ Examples:
   .addCommand(webhooksCommand)
   .addCommand(doctorCommand)
   .addCommand(setupCommand)
-  .addCommand(skillsCommand);
+  .addCommand(skillsCommand)
+  .addCommand(teamsCommand)
+  .addCommand(whoamiCommand);
 
 program.parse();

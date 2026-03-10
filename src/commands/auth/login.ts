@@ -3,7 +3,7 @@ import * as p from '@clack/prompts';
 import { Command } from '@commander-js/extra-typings';
 import { Resend } from 'resend';
 import type { GlobalOpts } from '../../lib/client';
-import { resolveApiKey, storeApiKey } from '../../lib/config';
+import { listTeams, resolveApiKey, storeApiKey } from '../../lib/config';
 import { buildHelpText } from '../../lib/help-text';
 import { errorMessage, outputError, outputResult } from '../../lib/output';
 import { cancelAndExit } from '../../lib/prompts';
@@ -35,12 +35,8 @@ export const loginCommand = new Command('login')
     'after',
     buildHelpText({
       setup: true,
-      context: `Non-interactive: --key is required (no prompts will appear when stdin/stdout is not a TTY).
-
-Alternative: Set RESEND_API_KEY environment variable — no login needed.
-Credentials stored at: ~/.config/resend/credentials.json
-  (Linux: $XDG_CONFIG_HOME/resend/credentials.json)
-  (Windows: %APPDATA%\\resend\\credentials.json)`,
+      context:
+        'Non-interactive: --key is required (no prompts will appear when stdin/stdout is not a TTY).',
       output: `  {"success":true,"config_path":"<path>"}`,
       errorCodes: ['missing_key', 'invalid_key_format', 'validation_failed'],
       examples: [
@@ -148,15 +144,68 @@ Credentials stored at: ~/.config/resend/credentials.json
       );
     }
 
-    const configPath = storeApiKey(apiKey);
+    let teamName = globalOpts.team;
+
+    if (!teamName && isInteractive()) {
+      const existingTeams = listTeams();
+      if (existingTeams.length > 0) {
+        const options = [
+          ...existingTeams.map((t) => ({
+            value: t.name,
+            label: `${t.name} (overwrite)`,
+          })),
+          { value: '__new__' as const, label: '+ Create new team' },
+        ];
+
+        const choice = await p.select({
+          message: 'Save API key to which team?',
+          options,
+        });
+
+        if (p.isCancel(choice)) {
+          cancelAndExit('Login cancelled.');
+        }
+
+        if (choice === '__new__') {
+          const newName = await p.text({
+            message: 'Enter a name for the new team:',
+            validate: (v) =>
+              !v || v.length === 0 ? 'Team name is required' : undefined,
+          });
+          if (p.isCancel(newName)) {
+            cancelAndExit('Login cancelled.');
+          }
+          teamName = newName;
+        } else {
+          teamName = choice;
+        }
+      } else {
+        const newName = await p.text({
+          message: 'Enter a team name (or press Enter for "default"):',
+          defaultValue: 'default',
+          placeholder: 'default',
+        });
+        if (p.isCancel(newName)) {
+          cancelAndExit('Login cancelled.');
+        }
+        teamName = newName;
+      }
+    }
+
+    const configPath = storeApiKey(apiKey, teamName);
+    const teamLabel = teamName || 'default';
 
     if (globalOpts.json) {
-      outputResult({ success: true, config_path: configPath }, { json: true });
+      outputResult(
+        { success: true, config_path: configPath, team: teamLabel },
+        { json: true },
+      );
     } else {
+      const msg = `API key stored for team '${teamLabel}' at ${configPath}`;
       if (isInteractive()) {
-        p.outro(`API key stored at ${configPath}`);
+        p.outro(msg);
       } else {
-        console.log(`API key stored at ${configPath}`);
+        console.log(msg);
       }
     }
   });

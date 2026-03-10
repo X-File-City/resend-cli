@@ -36,12 +36,20 @@ describe('logout command', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  function writeCredentials(key = 're_test_key_123') {
+  function writeCredentials(
+    teams: Record<string, string> = { default: 're_test_key_123' },
+  ) {
     const configDir = join(tmpDir, 'resend');
     mkdirSync(configDir, { recursive: true });
+    const creds = {
+      active_team: Object.keys(teams)[0],
+      teams: Object.fromEntries(
+        Object.entries(teams).map(([name, key]) => [name, { api_key: key }]),
+      ),
+    };
     writeFileSync(
       join(configDir, 'credentials.json'),
-      `${JSON.stringify({ api_key: key })}\n`,
+      `${JSON.stringify(creds, null, 2)}\n`,
     );
   }
 
@@ -69,6 +77,52 @@ describe('logout command', () => {
     const output = JSON.parse(spies.logSpy.mock.calls[0][0] as string);
     expect(output.success).toBe(true);
     expect(output.already_logged_out).toBe(true);
+  });
+
+  test('logout without --team removes all teams', async () => {
+    spies = setupOutputSpies();
+    writeCredentials({ staging: 're_staging_key', production: 're_prod_key' });
+
+    const { logoutCommand } = await import('../../../src/commands/auth/logout');
+    await logoutCommand.parseAsync([], { from: 'user' });
+
+    const configPath = join(tmpDir, 'resend', 'credentials.json');
+    expect(existsSync(configPath)).toBe(false);
+
+    const output = JSON.parse(spies.logSpy.mock.calls[0][0] as string);
+    expect(output.success).toBe(true);
+    expect(output.team).toBe('all');
+  });
+
+  test('logout with --team removes only that team', async () => {
+    spies = setupOutputSpies();
+    writeCredentials({ staging: 're_staging_key', production: 're_prod_key' });
+
+    // Use the full CLI program so --team global option is recognized
+    const { Command } = await import('@commander-js/extra-typings');
+    const { logoutCommand } = await import('../../../src/commands/auth/logout');
+    const program = new Command()
+      .option('--team <name>')
+      .option('--json')
+      .option('--api-key <key>')
+      .addCommand(logoutCommand);
+
+    await program.parseAsync(['logout', '--team', 'staging'], {
+      from: 'user',
+    });
+
+    const configPath = join(tmpDir, 'resend', 'credentials.json');
+    expect(existsSync(configPath)).toBe(true);
+
+    const remaining = JSON.parse(
+      require('node:fs').readFileSync(configPath, 'utf-8'),
+    );
+    expect(remaining.teams.staging).toBeUndefined();
+    expect(remaining.teams.production).toBeDefined();
+
+    const output = JSON.parse(spies.logSpy.mock.calls[0][0] as string);
+    expect(output.success).toBe(true);
+    expect(output.team).toBe('staging');
   });
 
   test('exits with error when file removal fails', async () => {
