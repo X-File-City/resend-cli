@@ -148,15 +148,21 @@ Credentials stored at: ~/.config/resend/credentials.json
       );
     }
 
-    const configPath = storeApiKey(apiKey);
+    const teamName = globalOpts.team;
+    const configPath = storeApiKey(apiKey, teamName);
+    const teamLabel = teamName || 'default';
 
     if (globalOpts.json) {
-      outputResult({ success: true, config_path: configPath }, { json: true });
+      outputResult(
+        { success: true, config_path: configPath, team: teamLabel },
+        { json: true },
+      );
     } else {
+      const msg = `API key stored for team '${teamLabel}' at ${configPath}`;
       if (isInteractive()) {
-        p.outro(`API key stored at ${configPath}`);
+        p.outro(msg);
       } else {
-        console.log(`API key stored at ${configPath}`);
+        console.log(msg);
       }
     }
   });

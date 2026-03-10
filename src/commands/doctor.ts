@@ -83,10 +83,11 @@ function checkApiKeyPresence(): CheckResult {
       detail: 'Run: resend login',
     };
   }
+  const teamInfo = resolved.team ? `, team: ${resolved.team}` : '';
   return {
     name: 'API Key',
     status: 'pass',
-    message: `${maskKey(resolved.key)} (source: ${resolved.source})`,
+    message: `${maskKey(resolved.key)} (source: ${resolved.source}${teamInfo})`,
   };
 }
 

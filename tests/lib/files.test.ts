@@ -47,7 +47,7 @@ describe('readFile', () => {
     );
 
     const output = errorSpy?.mock.calls.map((c) => c[0]).join(' ');
-    expect(output).toContain('file_read_error');
+    expect(output).toContain('Failed to read file:');
   });
 
   test('outputs JSON error with file_read_error code when json option is true', async () => {

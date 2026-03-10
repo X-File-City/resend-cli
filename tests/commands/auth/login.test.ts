@@ -74,10 +74,11 @@ describe('login command', () => {
 
     const configPath = join(tmpDir, 'resend', 'credentials.json');
     const data = JSON.parse(readFileSync(configPath, 'utf-8'));
-    expect(data.api_key).toBe('re_valid_test_key_123');
+    expect(data.teams.default.api_key).toBe('re_valid_test_key_123');
   });
 
   test('requires --key in non-interactive mode', async () => {
+    spies = setupOutputSpies();
     errorSpy = spyOn(console, 'error').mockImplementation(() => {});
     exitSpy = mockExitThrow();
 
