@@ -22,9 +22,8 @@
     "dev": "bun run src/cli.ts",
     "dev:watch": "bun --watch src/cli.ts",
     "build": "bun build --compile --minify --sourcemap --bytecode src/cli.ts --outfile dist/resend",
-    "lint": "biome check .",
-    "lint:fix": "biome check --write .",
-    "format": "biome format --write .",
+    "lint": "biome check",
+    "format": "biome format --write",
     "typecheck": "tsc -p tsconfig.check.json",
     "test": "bun test tests/commands tests/lib"
   },
