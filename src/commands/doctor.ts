@@ -169,9 +169,7 @@ export const doctorCommand = new Command('doctor')
     }
 
     // Check 1: CLI Version
-    let spinner = interactive
-      ? createSpinner('Checking CLI version...', 'orbit')
-      : null;
+    let spinner = interactive ? createSpinner('Checking CLI version...') : null;
     const versionCheck = await checkCliVersion();
     checks.push(versionCheck);
     if (versionCheck.status === 'warn') {
@@ -181,7 +179,7 @@ export const doctorCommand = new Command('doctor')
     }
 
     // Check 2: API Key
-    spinner = interactive ? createSpinner('Checking API key...', 'scan') : null;
+    spinner = interactive ? createSpinner('Checking API key...') : null;
     const keyCheck = checkApiKeyPresence(globalOpts.apiKey);
     checks.push(keyCheck);
     if (keyCheck.status === 'fail') {
@@ -192,7 +190,7 @@ export const doctorCommand = new Command('doctor')
 
     // Check 3: API Validation + Domains
     spinner = interactive
-      ? createSpinner('Validating API key & domains...', 'scan')
+      ? createSpinner('Validating API key & domains...')
       : null;
     const domainCheck = await checkApiValidationAndDomains(globalOpts.apiKey);
     checks.push(domainCheck);
