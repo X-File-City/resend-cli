@@ -28,7 +28,13 @@ const program = new Command()
   .option('--api-key <key>', 'Resend API key (overrides env/config)')
   .option('--team <name>', 'Team profile to use (overrides RESEND_TEAM)')
   .option('--json', 'Force JSON output')
+  .option('-q, --quiet', 'Suppress spinners and status output (implies --json)')
   .configureHelp({ showGlobalOptions: true })
+  .hook('preAction', (thisCommand, actionCommand) => {
+    if (actionCommand.optsWithGlobals().quiet) {
+      thisCommand.setOptionValue('json', true);
+    }
+  })
   .addHelpText(
     'after',
     `
@@ -40,6 +46,7 @@ Environment:
 
 Output:
   Human-readable by default. Pass --json or pipe stdout for machine-readable JSON.
+  Use --quiet (-q) in CI to suppress spinners and status messages (implies --json).
   Errors always exit with code 1: {"error":{"message":"...","code":"..."}}
 
 Examples:
