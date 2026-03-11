@@ -17,7 +17,10 @@ import {
 } from '../../helpers';
 
 const mockUpdate = mock(async () => ({
-  data: { object: 'contact_property' as const, id: 'prop_abc123' },
+  data: {
+    object: 'contact_property' as const,
+    id: 'b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d',
+  },
   error: null,
 }));
 
@@ -59,13 +62,13 @@ describe('contact-properties update command', () => {
       '../../../src/commands/contact-properties/update'
     );
     await updateContactPropertyCommand.parseAsync(
-      ['prop_abc123', '--fallback-value', 'Acme Corp'],
+      ['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d', '--fallback-value', 'Acme Corp'],
       { from: 'user' },
     );
 
     expect(mockUpdate).toHaveBeenCalledTimes(1);
     const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.id).toBe('prop_abc123');
+    expect(args.id).toBe('b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d');
     expect(args.fallbackValue).toBe('Acme Corp');
   });
 
@@ -76,12 +79,12 @@ describe('contact-properties update command', () => {
       '../../../src/commands/contact-properties/update'
     );
     await updateContactPropertyCommand.parseAsync(
-      ['prop_abc123', '--clear-fallback-value'],
+      ['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d', '--clear-fallback-value'],
       { from: 'user' },
     );
 
     const args = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
-    expect(args.id).toBe('prop_abc123');
+    expect(args.id).toBe('b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d');
     expect(args.fallbackValue).toBeNull();
   });
 
@@ -95,7 +98,12 @@ describe('contact-properties update command', () => {
     );
     await expectExit1(() =>
       updateContactPropertyCommand.parseAsync(
-        ['prop_abc123', '--fallback-value', 'Acme', '--clear-fallback-value'],
+        [
+          'b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d',
+          '--fallback-value',
+          'Acme',
+          '--clear-fallback-value',
+        ],
         { from: 'user' },
       ),
     );
@@ -111,14 +119,14 @@ describe('contact-properties update command', () => {
       '../../../src/commands/contact-properties/update'
     );
     await updateContactPropertyCommand.parseAsync(
-      ['prop_abc123', '--fallback-value', 'Test'],
+      ['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d', '--fallback-value', 'Test'],
       { from: 'user' },
     );
 
     const output = spies.logSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
     expect(parsed.object).toBe('contact_property');
-    expect(parsed.id).toBe('prop_abc123');
+    expect(parsed.id).toBe('b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d');
   });
 
   test('errors with no_changes when no flags are provided', async () => {
@@ -130,9 +138,12 @@ describe('contact-properties update command', () => {
       '../../../src/commands/contact-properties/update'
     );
     await expectExit1(() =>
-      updateContactPropertyCommand.parseAsync(['prop_abc123'], {
-        from: 'user',
-      }),
+      updateContactPropertyCommand.parseAsync(
+        ['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d'],
+        {
+          from: 'user',
+        },
+      ),
     );
 
     const output = errorSpy.mock.calls.map((c) => c[0]).join(' ');
@@ -148,9 +159,12 @@ describe('contact-properties update command', () => {
       '../../../src/commands/contact-properties/update'
     );
     await expectExit1(() =>
-      updateContactPropertyCommand.parseAsync(['prop_abc123'], {
-        from: 'user',
-      }),
+      updateContactPropertyCommand.parseAsync(
+        ['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d'],
+        {
+          from: 'user',
+        },
+      ),
     );
 
     expect(mockUpdate).not.toHaveBeenCalled();
@@ -168,7 +182,7 @@ describe('contact-properties update command', () => {
     );
     await expectExit1(() =>
       updateContactPropertyCommand.parseAsync(
-        ['prop_abc123', '--fallback-value', 'Test'],
+        ['b4a3c2d1-6e5f-8a7b-0c9d-2e1f4a3b6c5d', '--fallback-value', 'Test'],
         { from: 'user' },
       ),
     );
