@@ -142,7 +142,7 @@
     {
       "id": "ci-cd",
       "title": "CI/CD & Distribution",
-      "description": "GitHub Actions workflows handle testing (ci.yml), binary releases (release.yml), and installation verification across platforms. The CLI is distributed via npm, Homebrew, cURL/PowerShell installers, and standalone binaries built with yao-pkg.",
+      "description": "GitHub Actions workflows handle testing, binary releases, and installation verification across platforms. The CLI is distributed via npm, Homebrew, cURL/PowerShell installers, and standalone binaries built with yao-pkg.",
       "focusDirectory": ".github",
       "colorMode": "fileTypes",
       "highlightLayers": [
