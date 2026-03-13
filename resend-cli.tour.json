@@ -161,7 +161,7 @@
     {
       "id": "full-picture",
       "title": "The Full Picture",
-      "description": "You've seen how Resend CLI is structured: a commander.js entry point (src/cli.ts) delegates to command groups (src/commands/), powered by shared utilities (src/lib/) for authentication, output formatting, and interactive UX. Tests mirror the source, and CI handles multi-platform distribution. Happy exploring!",
+      "description": "You've seen how Resend CLI is structured: the commander.js entry point (src/cli.ts) delegates to command groups (src/commands/), powered by shared utilities (src/lib/) for authentication, output formatting, and interactive UX. Tests mirror the source, and CI handles multi-platform distribution. Happy exploring!",
       "focusDirectory": "",
       "colorMode": "fileTypes"
     }
