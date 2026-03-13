@@ -102,7 +102,7 @@
     {
       "id": "auth-flow",
       "title": "Authentication System",
-      "description": "Authentication uses a three-tier resolution: api-key flag (highest priority), RESEND_API_KEY environment variable, or stored credentials in config/resend/credentials.json. The auth commands handle login (browser-based or manual), logout, profile switching, and multi-account support.",
+      "description": "Authentication uses a three-tier resolution: the api-key flag (highest priority), RESEND_API_KEY environment variable, or stored credentials in config/resend/credentials.json. The auth commands handle login (browser-based or manual), logout, profile switching, and multi-account support.",
       "focusDirectory": "src/commands/auth",
       "colorMode": "fileTypes",
       "highlightLayers": [
@@ -142,7 +142,7 @@
     {
       "id": "ci-cd",
       "title": "CI/CD & Distribution",
-      "description": "GitHub Actions workflows handle testing (ci.yml), binary releases (release.yml), and installation verification across platforms. The CLI is distributed via npm, Homebrew, cURL/PowerShell installers, and standalone binaries built with @yao-pkg/pkg.",
+      "description": "GitHub Actions workflows handle testing (ci.yml), binary releases (release.yml), and installation verification across platforms. The CLI is distributed via npm, Homebrew, cURL/PowerShell installers, and standalone binaries built with yao-pkg.",
       "focusDirectory": ".github",
       "colorMode": "fileTypes",
       "highlightLayers": [
